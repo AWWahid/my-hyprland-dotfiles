@@ -1,0 +1,17 @@
+# Local secret keys & environment tokens
+*secret*
+*.key
+*.pem
+.env
+
+# System & runtime logs
+*.log
+*.tmp
+*.bak
+
+# Hardware/Device specific local overrides
+*.local
+
+# OS garbage
+.DS_Store
+thumbs.db
