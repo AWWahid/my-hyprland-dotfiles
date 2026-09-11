@@ -28,8 +28,8 @@ hl.monitor({
 ---------------------
 
 -- Set programs that you use
-local terminal    = "foot"
-local fileManager = "foot -e yazi"
+local terminal    = "kitty"
+local fileManager = "kitty -e yazi"
 local menu        = "fuzzel"
 
 
@@ -42,7 +42,7 @@ local menu        = "fuzzel"
 -- Autostart necessary processes (like notifications daemons, status bars, etc.)
 -- Or execute your favorite apps at launch like this:
 --
--- hl.on("hyprland.start", function () 
+-- hl.on("hyprland.start", function ()
 --   hl.exec_cmd(terminal)
 --   hl.exec_cmd("nm-applet")
 --   hl.exec_cmd("waybar & hyprpaper & firefox")
