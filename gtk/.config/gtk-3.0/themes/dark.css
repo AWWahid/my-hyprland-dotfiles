@@ -1,0 +1,8 @@
+/* Pure black overrides on top of Adwaita-dark */
+@define-color theme_bg_color #000000;
+@define-color theme_base_color #000000;
+window, .background, headerbar, .titlebar, textview text, treeview.view,
+notebook, notebook > header, scrolledwindow, list, row, iconview, .sidebar, placessidebar {
+    background-color: #000000;
+    background-image: none;
+}

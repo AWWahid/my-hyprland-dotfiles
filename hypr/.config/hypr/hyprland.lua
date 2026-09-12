@@ -126,8 +126,8 @@ hl.config({
         rounding_power = 2,
 
         -- Change transparency of focused and unfocused windows
-        active_opacity   = 1.0,
-        inactive_opacity = 1.0,
+        active_opacity   = 0.92,
+        inactive_opacity = 0.92,
 
         -- Darken unfocused windows (focus indicator, since borders are off)
         dim_inactive = true,
@@ -140,11 +140,17 @@ hl.config({
             color        = 0xee1a1a1a,
         },
 
+        -- xray: blur only the wallpaper (cached) instead of re-blurring windows behind
+        -- every frame; cheap on the iGPU since the wallpaper is static
         blur = {
-            enabled   = true,
-            size      = 3,
-            passes    = 1,
-            vibrancy  = 0.1696,
+            enabled           = true,
+            size              = 10,
+            passes            = 3,
+            vibrancy          = 0.1696,
+            xray              = true,
+            new_optimizations = true,
+            popups            = false,
+            special           = false,
         },
     },
 
