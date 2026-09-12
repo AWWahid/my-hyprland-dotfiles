@@ -284,6 +284,7 @@ hl.bind(mainMod .. " + J", hl.dsp.layout("togglesplit"))    -- dwindle only
 hl.bind(mainMod .. " + L",      hl.dsp.exec_cmd("loginctl lock-session"))
 hl.bind(mainMod .. " + escape", hl.dsp.exec_cmd("~/.config/hypr/scripts/powermenu.sh"))
 hl.bind(mainMod .. " + W",      hl.dsp.exec_cmd("~/.config/hypr/scripts/wallpaper.sh"))
+hl.bind(mainMod .. " + SHIFT + D", hl.dsp.exec_cmd("~/.config/hypr/scripts/theme-toggle.sh"))  -- light/dark toggle
 
 -- Screenshots (saved to $HYPRSHOT_DIR and copied to clipboard)
 hl.bind("Print",                hl.dsp.exec_cmd("hyprshot -m region"))
