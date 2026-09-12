@@ -48,10 +48,20 @@ local menu        = "fuzzel"
 --   hl.exec_cmd("waybar & hyprpaper & firefox")
 -- end)
 
--- Clipboard: store history with cliphist (also keeps copied content alive after the source app closes)
+-- Activate graphical-session.target so systemd user services that require it (xdg-desktop-portal) can start
 hl.on("hyprland.start", function ()
-    hl.exec_cmd("wl-paste --type text --watch cliphist store")
-    hl.exec_cmd("wl-paste --type image --watch cliphist store")
+    hl.exec_cmd("systemctl --user start hyprland-session.target")
+end)
+hl.on("hyprland.shutdown", function ()
+    hl.exec_cmd("systemctl --user stop hyprland-session.target")
+end)
+
+hl.on("hyprland.start", function ()
+    -- Clipboard history via cliphist (text and images; also keeps copies alive after the source app closes)
+    hl.exec_cmd("wl-paste --watch cliphist store")
+    hl.exec_cmd("waybar")
+    hl.exec_cmd("hyprpaper")
+    hl.exec_cmd("hypridle")
 end)
 
 
@@ -63,6 +73,7 @@ end)
 
 hl.env("XCURSOR_SIZE", "24")
 hl.env("HYPRCURSOR_SIZE", "24")
+hl.env("HYPRSHOT_DIR", os.getenv("HOME") .. "/Pictures/Screenshots")
 
 
 -----------------------
@@ -211,8 +222,8 @@ hl.config({
 
 hl.config({
     misc = {
-        force_default_wallpaper = -1,    -- Set to 0 or 1 to disable the anime mascot wallpapers
-        disable_hyprland_logo   = false, -- If true disables the random hyprland logo / anime girl background. :(
+        force_default_wallpaper = 0,    -- Set to 0 or 1 to disable the anime mascot wallpapers
+        disable_hyprland_logo   = true, -- If true disables the random hyprland logo / anime girl background. :(
     },
 })
 
@@ -270,12 +281,31 @@ hl.bind(mainMod .. " + V", hl.dsp.exec_cmd("cliphist list | fuzzel --dmenu | cli
 hl.bind(mainMod .. " + R", hl.dsp.exec_cmd(menu))
 hl.bind(mainMod .. " + P", hl.dsp.window.pseudo())
 hl.bind(mainMod .. " + J", hl.dsp.layout("togglesplit"))    -- dwindle only
+hl.bind(mainMod .. " + L",      hl.dsp.exec_cmd("loginctl lock-session"))
+hl.bind(mainMod .. " + escape", hl.dsp.exec_cmd("~/.config/hypr/scripts/powermenu.sh"))
+hl.bind(mainMod .. " + W",      hl.dsp.exec_cmd("~/.config/hypr/scripts/wallpaper.sh"))
+
+-- Screenshots (saved to $HYPRSHOT_DIR and copied to clipboard)
+hl.bind("Print",                hl.dsp.exec_cmd("hyprshot -m region"))
+hl.bind(mainMod .. " + Print",  hl.dsp.exec_cmd("hyprshot -m window"))
+hl.bind("SHIFT + Print",        hl.dsp.exec_cmd("hyprshot -m output"))
 
 -- Move focus with mainMod + arrow keys
 hl.bind(mainMod .. " + left",  hl.dsp.focus({ direction = "left" }))
 hl.bind(mainMod .. " + right", hl.dsp.focus({ direction = "right" }))
 hl.bind(mainMod .. " + up",    hl.dsp.focus({ direction = "up" }))
 hl.bind(mainMod .. " + down",  hl.dsp.focus({ direction = "down" }))
+
+-- Fullscreen, move windows with mainMod + SHIFT + arrows, resize with mainMod + ALT + arrows
+hl.bind(mainMod .. " + F", hl.dsp.window.fullscreen({ action = "toggle", mode = "fullscreen" }))
+hl.bind(mainMod .. " + SHIFT + left",  hl.dsp.window.move({ direction = "left" }))
+hl.bind(mainMod .. " + SHIFT + right", hl.dsp.window.move({ direction = "right" }))
+hl.bind(mainMod .. " + SHIFT + up",    hl.dsp.window.move({ direction = "up" }))
+hl.bind(mainMod .. " + SHIFT + down",  hl.dsp.window.move({ direction = "down" }))
+hl.bind(mainMod .. " + ALT + left",  hl.dsp.window.resize({ x = -40, y = 0,   relative = true }), { repeating = true })
+hl.bind(mainMod .. " + ALT + right", hl.dsp.window.resize({ x = 40,  y = 0,   relative = true }), { repeating = true })
+hl.bind(mainMod .. " + ALT + up",    hl.dsp.window.resize({ x = 0,   y = -40, relative = true }), { repeating = true })
+hl.bind(mainMod .. " + ALT + down",  hl.dsp.window.resize({ x = 0,   y = 40,  relative = true }), { repeating = true })
 
 -- Switch workspaces with mainMod + [0-9]
 -- Move active window to a workspace with mainMod + SHIFT + [0-9]
