@@ -126,8 +126,8 @@ hl.config({
         rounding_power = 2,
 
         -- Change transparency of focused and unfocused windows
-        active_opacity   = 0.92,
-        inactive_opacity = 0.92,
+        active_opacity   = 0.85,
+        inactive_opacity = 0.85,
 
         -- Darken unfocused windows (focus indicator, since borders are off)
         dim_inactive = true,
@@ -234,6 +234,11 @@ hl.config({
     misc = {
         force_default_wallpaper = 0,    -- Set to 0 or 1 to disable the anime mascot wallpapers
         disable_hyprland_logo   = true, -- If true disables the random hyprland logo / anime girl background. :(
+    },
+
+    -- Scan out fullscreen video/game windows directly (skips compositing, saves battery)
+    render = {
+        direct_scanout = 2,
     },
 })
 
@@ -384,6 +389,28 @@ hl.window_rule({
     },
 
     no_focus = true,
+})
+
+-- Transparency is for looks only; keep video readable and allow direct scanout
+hl.window_rule({
+    name  = "opaque-video",
+    match = { content = "video" },
+
+    opaque = true,
+})
+
+hl.window_rule({
+    name  = "opaque-game",
+    match = { content = "game" },
+
+    opaque = true,
+})
+
+hl.window_rule({
+    name  = "opaque-browser",
+    match = { class = "^(firefox|org\\.mozilla\\.firefox)$" },
+
+    opaque = true,
 })
 
 -- Layer rules also return a handle.
