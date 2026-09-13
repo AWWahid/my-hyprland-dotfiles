@@ -9,7 +9,8 @@
 }
 
 window#waybar {
-    background: @bg;
+    /* same as windows' active/inactive_opacity in hyprland.lua; text stays opaque */
+    background: alpha(@bg, 0.85);
     color: @fg;
 }
 
@@ -26,6 +27,26 @@ window#waybar {
 
 #workspaces button.urgent {
     color: #ff6633;
+}
+
+#dock {
+    margin-right: 4px;
+}
+
+/* 18px glyph + 7px padding each side = ~32px hit target; padding is the gap, so no dead zone between icons */
+#custom-files,
+#custom-terminal,
+#custom-firefox,
+#custom-zed {
+    font-size: 18px;
+    padding: 0 7px;
+}
+
+#custom-files:hover,
+#custom-terminal:hover,
+#custom-firefox:hover,
+#custom-zed:hover {
+    color: @accent;
 }
 
 #window,

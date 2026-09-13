@@ -1,11 +1,20 @@
 {
     "layer": "top",
-    "position": "top",
-    "height": 30,
+    "position": "bottom",
+    "height": 34,
 
-    "modules-left": ["hyprland/workspaces", "hyprland/window"],
+    "modules-left": ["group/dock", "hyprland/workspaces", "hyprland/window"],
     "modules-center": ["clock"],
     "modules-right": ["tray", "pulseaudio", "backlight", "network", "bluetooth", "battery", "custom/wallpaper", "custom/power"],
+
+    "group/dock": {
+        "orientation": "horizontal",
+        "modules": ["custom/files", "custom/terminal", "custom/firefox", "custom/zed"]
+    },
+    "custom/files":    { "format": "󰉋", "tooltip-format": "Files",    "on-click": "kitty -e yazi" },
+    "custom/terminal": { "format": "\uf489", "tooltip-format": "Terminal", "on-click": "kitty" },
+    "custom/firefox":  { "format": "󰈹", "tooltip-format": "Firefox",  "on-click": "firefox" },
+    "custom/zed":      { "format": "󰅩", "tooltip-format": "Zed",      "on-click": "~/.local/bin/zed" },
 
     "hyprland/window": {
         "max-length": 60,

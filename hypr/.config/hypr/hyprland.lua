@@ -413,6 +413,13 @@ hl.window_rule({
     opaque = true,
 })
 
+-- Waybar matches window transparency (0.85 bg in style.css) with the same blur
+hl.layer_rule({
+    name  = "blur-waybar",
+    match = { namespace = "^waybar$" },
+    blur  = true,
+})
+
 -- Layer rules also return a handle.
 -- local overlayLayerRule = hl.layer_rule({
 --     name  = "no-anim-overlay",
