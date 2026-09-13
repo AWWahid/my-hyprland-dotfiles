@@ -78,7 +78,6 @@ end)
 hl.env("XCURSOR_THEME", "macOS-plain")
 hl.env("XCURSOR_SIZE", "24")
 hl.env("HYPRCURSOR_SIZE", "24")
-hl.env("HYPRSHOT_DIR", os.getenv("HOME") .. "/Pictures/Screenshots")
 
 
 -----------------------
@@ -295,10 +294,11 @@ hl.bind(mainMod .. " + escape", hl.dsp.exec_cmd("~/.config/hypr/scripts/powermen
 hl.bind(mainMod .. " + W",      hl.dsp.exec_cmd("~/.config/hypr/scripts/wallpaper.sh"))
 hl.bind(mainMod .. " + SHIFT + D", hl.dsp.exec_cmd("~/.config/hypr/scripts/theme-toggle.sh"))  -- light/dark toggle
 
--- Screenshots (saved to $HYPRSHOT_DIR and copied to clipboard)
-hl.bind("Print",                hl.dsp.exec_cmd("hyprshot -m region"))
-hl.bind(mainMod .. " + Print",  hl.dsp.exec_cmd("hyprshot -m window"))
-hl.bind("SHIFT + Print",        hl.dsp.exec_cmd("hyprshot -m output"))
+-- Screenshots, Windows style (clipboard only; click the notification to edit in satty)
+local shot = "~/.config/hypr/scripts/screenshot.sh"
+hl.bind("Print",                   hl.dsp.exec_cmd(shot .. " region"))
+hl.bind("SHIFT + Print",           hl.dsp.exec_cmd(shot .. " screen"))
+hl.bind("ALT + Print",             hl.dsp.exec_cmd(shot .. " window"))
 
 -- Move focus with mainMod + arrow keys
 hl.bind(mainMod .. " + left",  hl.dsp.focus({ direction = "left" }))
