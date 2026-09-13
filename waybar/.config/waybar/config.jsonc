@@ -2,87 +2,137 @@
     "layer": "top",
     "position": "bottom",
     "height": 34,
-
-    "modules-left": ["group/dock", "hyprland/workspaces", "hyprland/window"],
-    "modules-center": ["clock"],
-    "modules-right": ["tray", "pulseaudio", "backlight", "network", "bluetooth", "battery", "custom/wallpaper", "custom/power"],
-
+    "modules-left": [
+        "custom/power",
+        "hyprland/workspaces"
+    ],
+    "modules-center": [
+        "group/dock"
+    ],
+    "modules-right": [
+        "group/traydrawer",
+        "network",
+        "pulseaudio",
+        "battery",
+        "clock"
+    ],
     "group/dock": {
         "orientation": "horizontal",
-        "modules": ["custom/files", "custom/terminal", "custom/firefox", "custom/zed"]
+        "modules": [
+            "custom/files",
+            "custom/terminal",
+            "custom/firefox",
+            "custom/zed"
+        ]
     },
-    "custom/files":    { "format": "󰉋", "tooltip-format": "Files",    "on-click": "kitty -e yazi" },
-    "custom/terminal": { "format": "\uf489", "tooltip-format": "Terminal", "on-click": "kitty" },
-    "custom/firefox":  { "format": "󰈹", "tooltip-format": "Firefox",  "on-click": "firefox" },
-    "custom/zed":      { "format": "󰅩", "tooltip-format": "Zed",      "on-click": "~/.local/bin/zed" },
-
-    "hyprland/window": {
-        "max-length": 60,
-        "separate-outputs": true
+    "custom/files": {
+        "format": "\udb80\ude4b",
+        "tooltip-format": "Files",
+        "on-click": "kitty -e yazi"
     },
-
+    "custom/terminal": {
+        "format": "\uf489",
+        "tooltip-format": "Terminal",
+        "on-click": "kitty"
+    },
+    "custom/firefox": {
+        "format": "\udb80\ude39",
+        "tooltip-format": "Firefox",
+        "on-click": "firefox"
+    },
+    "custom/zed": {
+        "format": "\udb80\udd69",
+        "tooltip-format": "Zed",
+        "on-click": "~/.local/bin/zed"
+    },
     "clock": {
-        "format": "{:%a %d %b  %H:%M}",
+        "format": "{:%a %d %b  %I:%M %p}",
         "interval": 60,
         "tooltip-format": "<tt>{calendar}</tt>"
     },
-
     "pulseaudio": {
-        "format": "{icon} {volume}%",
-        "format-muted": "󰝟 muted",
-        "format-icons": { "default": ["󰕿", "󰖀", "󰕾"] },
+        "format": "<span size='12pt'>{icon}</span> {volume}%",
+        "format-muted": "<span size='12pt'>\udb81\udf5f</span> muted",
+        "format-icons": {
+            "default": [
+                "\udb81\udd7f",
+                "\udb81\udd80",
+                "\udb81\udd7e"
+            ]
+        },
         "scroll-step": 5,
         "on-click": "pavucontrol",
         "on-click-right": "wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle"
     },
-
-    "backlight": {
-        "format": "󰃠 {percent}%",
-        "on-scroll-up": "brightnessctl -e4 -n2 set 5%+",
-        "on-scroll-down": "brightnessctl -e4 -n2 set 5%-"
-    },
-
     "network": {
-        "format-wifi": "󰤨 {essid}",
-        "format-ethernet": "󰈀 wired",
-        "format-disconnected": "󰤭 offline",
-        "format-disabled": "󰤮 off",
+        "format-wifi": "{icon}",
+        "format-ethernet": "\udb80\ude00",
+        "format-disconnected": "\udb82\udd2d",
+        "format-disabled": "\udb82\udd2e",
         "tooltip-format-wifi": "{essid} ({signalStrength}%)\n{ipaddr}",
         "tooltip-format-ethernet": "{ifname}\n{ipaddr}",
-        "on-click": "~/.config/hypr/scripts/wifi-menu.sh"
+        "on-click": "~/.config/hypr/scripts/wifi-menu.sh",
+        "format-icons": [
+            "\udb82\udd1f",
+            "\udb82\udd22",
+            "\udb82\udd25",
+            "\udb82\udd28"
+        ]
     },
-
     "bluetooth": {
-        "format": "󰂯",
-        "format-off": "󰂲",
-        "format-disabled": "󰂲",
-        "format-connected": "󰂱 {device_alias}",
+        "format": "\udb80\udcaf",
+        "format-off": "\udb80\udcb2",
+        "format-disabled": "\udb80\udcb2",
+        "format-connected": "\udb80\udcb1",
         "format-no-controller": "",
         "tooltip-format-connected": "{device_enumerate}",
         "tooltip-format-enumerate-connected": "{device_alias}",
         "on-click": "~/.config/hypr/scripts/bt-menu.sh"
     },
-
     "battery": {
         "bat": "BAT0",
         "interval": 60,
-        "states": { "warning": 20, "critical": 10 },
-        "format": "{icon} {capacity}%",
-        "format-charging": "󰂄 {capacity}%",
-        "format-plugged": "󰚥 {capacity}%",
-        "format-icons": ["󰁺", "󰁼", "󰁾", "󰂀", "󰁹"],
+        "states": {
+            "warning": 20,
+            "critical": 10
+        },
+        "format": "<span size='12pt'>{icon}</span> {capacity}%",
+        "format-charging": "<span size='12pt'>\udb80\udc84</span> {capacity}%",
+        "format-plugged": "<span size='12pt'>\udb81\udea5</span> {capacity}%",
+        "format-icons": [
+            "\udb80\udc7a",
+            "\udb80\udc7c",
+            "\udb80\udc7e",
+            "\udb80\udc80",
+            "\udb80\udc79"
+        ],
         "tooltip-format": "{timeTo}"
     },
-
-    "custom/wallpaper": {
-        "format": "󰸉",
-        "tooltip": false,
-        "on-click": "~/.config/hypr/scripts/wallpaper.sh"
-    },
-
     "custom/power": {
-        "format": "󰐥",
+        "format": "\udb81\udc25",
         "tooltip": false,
         "on-click": "~/.config/hypr/scripts/powermenu.sh"
+    },
+    "group/traydrawer": {
+        "orientation": "horizontal",
+        "modules": [
+            "custom/expand",
+            "bluetooth",
+            "tray"
+        ],
+        "drawer": {
+            "click-to-reveal": true,
+            "transition-left-to-right": false,
+            "transition-duration": 200,
+            "children-class": "drawer-child"
+        }
+    },
+    "custom/expand": {
+        "format": "\udb80\udd41",
+        "tooltip-format": "Hidden icons"
+    },
+    "tray": {
+        "spacing": 14,
+        "icon-size": 18
     }
 }

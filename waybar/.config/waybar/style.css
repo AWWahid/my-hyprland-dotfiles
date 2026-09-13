@@ -15,7 +15,7 @@ window#waybar {
 }
 
 #workspaces button {
-    padding: 0 8px;
+    padding: 0 7px;
     color: @muted;
     background: transparent;
 }
@@ -29,8 +29,25 @@ window#waybar {
     color: #ff6633;
 }
 
-#dock {
-    margin-right: 4px;
+/* icon-only clickables match the dock: 18px glyph + 7px padding = ~32px target */
+#custom-power,
+#bluetooth {
+    font-size: 18px;
+}
+
+/* revealed drawer icons get a faint tint, so an open drawer is obvious */
+.drawer-child {
+    background: alpha(@accent, 0.15);
+}
+
+/* chevron glyph is thin, so it is drawn larger */
+#custom-expand {
+    font-size: 22px;
+}
+
+/* wifi glyph fills more of its box than the others, so it's drawn smaller to look the same size */
+#network {
+    font-size: 17px;
 }
 
 /* 18px glyph + 7px padding each side = ~32px hit target; padding is the gap, so no dead zone between icons */
@@ -49,17 +66,15 @@ window#waybar {
     color: @accent;
 }
 
-#window,
 #clock,
 #tray,
 #pulseaudio,
-#backlight,
 #network,
 #bluetooth,
 #battery,
-#custom-wallpaper,
+#custom-expand,
 #custom-power {
-    padding: 0 10px;
+    padding: 0 7px;
 }
 
 #pulseaudio.muted,
