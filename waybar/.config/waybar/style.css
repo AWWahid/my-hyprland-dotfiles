@@ -1,7 +1,9 @@
 @import "colors.css";
 
 * {
-    font-family: Inter, "Symbols Nerd Font";
+    font-family: Inter;
+    /* SF-like: round quotes/commas (ss03); fixed-width digits so the clock and percentages don't shift (tnum) */
+    font-feature-settings: "ss03=1, tnum=1";
     font-size: 13px;
     border: none;
     border-radius: 0;
@@ -15,7 +17,6 @@ window#waybar {
 }
 
 #workspaces button {
-    padding: 0 7px;
     color: @muted;
     background: transparent;
 }
@@ -29,34 +30,23 @@ window#waybar {
     color: #ff6633;
 }
 
-/* icon-only clickables match the dock: 18px glyph + 7px padding = ~32px target */
+/* all icons: one font size so Material Symbols' shared 24px grid keeps them optically equal.
+   18px glyph + 4px padding each side = 26px hit target; padding is the gap, so there is no dead zone */
 #custom-power,
+#custom-expand,
+#custom-files,
+#custom-terminal,
+#custom-firefox,
+#custom-zed,
+#network,
 #bluetooth {
+    font-family: "Material Symbols Filled";
     font-size: 18px;
 }
 
 /* revealed drawer icons get a faint tint, so an open drawer is obvious */
 .drawer-child {
     background: alpha(@accent, 0.15);
-}
-
-/* chevron glyph is thin, so it is drawn larger */
-#custom-expand {
-    font-size: 22px;
-}
-
-/* wifi glyph fills more of its box than the others, so it's drawn smaller to look the same size */
-#network {
-    font-size: 17px;
-}
-
-/* 18px glyph + 7px padding each side = ~32px hit target; padding is the gap, so no dead zone between icons */
-#custom-files,
-#custom-terminal,
-#custom-firefox,
-#custom-zed {
-    font-size: 18px;
-    padding: 0 7px;
 }
 
 #custom-files:hover,
@@ -66,15 +56,30 @@ window#waybar {
     color: @accent;
 }
 
-#clock,
+#workspaces button {
+    min-width: 26px;
+    padding: 0;
+}
+
 #tray,
 #pulseaudio,
 #network,
 #bluetooth,
 #battery,
 #custom-expand,
-#custom-power {
-    padding: 0 7px;
+#custom-power,
+#custom-files,
+#custom-terminal,
+#custom-firefox,
+#custom-zed {
+    padding: 0 4px;
+}
+
+/* text modules get a wider gap so the percentages don't run into the next icon */
+#pulseaudio,
+#battery,
+#clock {
+    padding: 0 8px;
 }
 
 #pulseaudio.muted,
@@ -94,4 +99,34 @@ window#waybar {
 
 #custom-power {
     color: #ff6666;
+}
+
+/* optical corrections: Material glyphs share a grid but not visual weight */
+/* wifi wedge is wide, solid and top-heavy: drawn smaller; its point makes it read low, so it's lifted
+   (negative margin cancels the padding so the bar height doesn't change) */
+#network {
+    font-size: 16px;
+    padding-bottom: 1px;
+    margin-top: -1px;
+}
+
+/* chevron and code brackets are thin strokes, drawn larger to match the solid icons */
+#custom-expand {
+    font-size: 20px;
+    padding-bottom: 1px;
+    margin-top: -1px;
+}
+
+/* app launchers are the main targets: bigger glyphs and wider hit areas (22px + 6px each side = 34px) */
+#custom-files,
+#custom-terminal,
+#custom-firefox,
+#custom-zed {
+    font-size: 22px;
+    padding: 0 6px;
+}
+
+/* breathing room between power and the workspace numbers */
+#custom-power {
+    margin-right: 4px;
 }

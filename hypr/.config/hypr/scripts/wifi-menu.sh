@@ -6,7 +6,7 @@ notify() { notify-send -a "Wi-Fi" "$@"; }
 pick() { fuzzel --dmenu --index --prompt "Wi-Fi: " "$@"; }
 
 if [ "$(nmcli -t radio wifi)" != enabled ]; then
-    [ "$(printf '󰤨  Turn Wi-Fi on\n' | pick --lines 1)" = 0 ] && nmcli radio wifi on && notify "Wi-Fi turned on"
+    [ "$(printf '  Turn Wi-Fi on\n' | pick --lines 1)" = 0 ] && nmcli radio wifi on && notify "Wi-Fi turned on"
     exit 0
 fi
 
@@ -16,21 +16,21 @@ if [ "$1" = rescan ]; then
     notify "Scanning…"
 fi
 
-labels=("󰑐  Rescan" "󰤮  Turn Wi-Fi off")
+labels=("  Rescan" "  Turn Wi-Fi off")
 actions=(rescan off)
 ssids=("" "")
 secs=("" "")
 
 active=$(nmcli -t -f DEVICE,TYPE,STATE dev | awk -F: '$2 == "wifi" && $3 == "connected" { print $1; exit }')
 if [ -n "$active" ]; then
-    labels+=("󰖪  Disconnect"); actions+=(disconnect); ssids+=(""); secs+=("")
+    labels+=("  Disconnect"); actions+=(disconnect); ssids+=(""); secs+=("")
 fi
 
 # Terse output escapes ':' inside SSIDs as '\:'. SSID is the last field, so rejoin the rest.
 # Fields are re-emitted with \x1f so empty ones survive `read`.
 while IFS=$'\x1f' read -r inuse signal security ssid; do
-    lock=" "; [ -n "$security" ] && [ "$security" != "--" ] && lock="󰌾"
-    mark="  "; [ "$inuse" = "*" ] && mark="󰄬 "
+    lock=" "; [ -n "$security" ] && [ "$security" != "--" ] && lock=""
+    mark="  "; [ "$inuse" = "*" ] && mark=" "
     labels+=("$mark$lock  $signal%  $ssid"); actions+=(net); ssids+=("$ssid"); secs+=("$security")
 done < <(nmcli -t -f IN-USE,SIGNAL,SECURITY,SSID dev wifi list --rescan "$rescan" |
     awk -F: '{ s = $4; for (i = 5; i <= NF; i++) s = s ":" $i; gsub(/\\:/, ":", s)

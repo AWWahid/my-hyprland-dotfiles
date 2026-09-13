@@ -1,2 +1,5 @@
 # Read BAT0 uevent on AC plug/unplug so waybar's inotify watch refreshes instantly
 SUBSYSTEM=="power_supply", KERNEL=="ADP1", ACTION=="change", RUN+="/usr/bin/cat /sys/class/power_supply/BAT0/uevent"
+# On unplug BAT0 still reads "Charging" for ~1.5s and flips to "Discharging" without an event,
+# so read again after it settles. Waits inline: udev kills background children and blocks systemd-run.
+SUBSYSTEM=="power_supply", KERNEL=="ADP1", ACTION=="change", ENV{POWER_SUPPLY_ONLINE}=="0", RUN+="/bin/sh -c 'sleep 2; cat /sys/class/power_supply/BAT0/uevent; sleep 2; cat /sys/class/power_supply/BAT0/uevent'"

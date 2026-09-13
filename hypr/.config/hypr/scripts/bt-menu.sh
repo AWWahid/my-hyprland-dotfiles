@@ -10,7 +10,7 @@ if ! bluetoothctl show >/dev/null 2>&1 || bluetoothctl show | grep -q 'No defaul
 fi
 
 if ! bluetoothctl show | grep -q 'Powered: yes'; then
-    if [ "$(printf '󰂯  Turn Bluetooth on\n' | pick --lines 1)" = 0 ]; then
+    if [ "$(printf '  Turn Bluetooth on\n' | pick --lines 1)" = 0 ]; then
         bluetoothctl power on >/dev/null && exec "$0"
     fi
     exit 0
@@ -22,7 +22,7 @@ if [ "$1" = scan ]; then
     bluetoothctl --timeout 15 scan on >/dev/null
 fi
 
-labels=("󰑐  Scan for devices" "󰂲  Turn Bluetooth off")
+labels=("  Scan for devices" "  Turn Bluetooth off")
 actions=(scan off)
 macs=("" "")
 
@@ -36,11 +36,11 @@ while read -r _ mac name; do
         audio-*) name="$name  (audio)" ;;
     esac
     if grep -q 'Connected: yes' <<<"$info"; then
-        labels+=("󰂱  $name  (connected)"); actions+=(disconnect)
+        labels+=("  $name  (connected)"); actions+=(disconnect)
     elif grep -q 'Paired: yes' <<<"$info"; then
-        labels+=("󰂯  $name"); actions+=(connect)
+        labels+=("  $name"); actions+=(connect)
     else
-        labels+=("󰂳  $name  (new)"); actions+=(pair)
+        labels+=("  $name  (new)"); actions+=(pair)
     fi
     macs+=("$mac")
 done < <(bluetoothctl devices)

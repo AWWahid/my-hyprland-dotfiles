@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Power menu (SUPER+Escape / waybar power button)
 
-choice=$(printf '%s\n' "󰌾  Lock" "󰍃  Logout" "󰤄  Suspend" "󰜉  Reboot" "󰐥  Shutdown" |
+choice=$(printf '%s\n' "  Lock" "  Logout" "  Suspend" "  Reboot" "  Shutdown" |
     fuzzel --dmenu --prompt "Power: " --lines 5)
 
 case "$choice" in

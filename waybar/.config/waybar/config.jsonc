@@ -1,7 +1,7 @@
 {
     "layer": "top",
     "position": "bottom",
-    "height": 34,
+    "height": 26,
     "modules-left": [
         "custom/power",
         "hyprland/workspaces"
@@ -26,22 +26,22 @@
         ]
     },
     "custom/files": {
-        "format": "\udb80\ude4b",
+        "format": "\ue2c7",
         "tooltip-format": "Files",
         "on-click": "kitty -e yazi"
     },
     "custom/terminal": {
-        "format": "\uf489",
+        "format": "\ueb8e",
         "tooltip-format": "Terminal",
         "on-click": "kitty"
     },
     "custom/firefox": {
-        "format": "\udb80\ude39",
+        "format": "\ue80b",
         "tooltip-format": "Firefox",
         "on-click": "firefox"
     },
     "custom/zed": {
-        "format": "\udb80\udd69",
+        "format": "\ue86f",
         "tooltip-format": "Zed",
         "on-click": "~/.local/bin/zed"
     },
@@ -51,13 +51,13 @@
         "tooltip-format": "<tt>{calendar}</tt>"
     },
     "pulseaudio": {
-        "format": "<span size='12pt'>{icon}</span> {volume}%",
-        "format-muted": "<span size='12pt'>\udb81\udf5f</span> muted",
+        "format": "<span size='13.5pt' rise='-1.5pt' font_family='Material Symbols Filled'>{icon}</span> <span rise='3pt'>{volume}%</span>",
+        "format-muted": "<span size='13.5pt' rise='-1.5pt' font_family='Material Symbols Filled'>\ue04f</span> <span rise='3pt'>muted</span>",
         "format-icons": {
             "default": [
-                "\udb81\udd7f",
-                "\udb81\udd80",
-                "\udb81\udd7e"
+                "\ue04e",
+                "\ue04d",
+                "\ue050"
             ]
         },
         "scroll-step": 5,
@@ -66,24 +66,24 @@
     },
     "network": {
         "format-wifi": "{icon}",
-        "format-ethernet": "\udb80\ude00",
-        "format-disconnected": "\udb82\udd2d",
-        "format-disabled": "\udb82\udd2e",
+        "format-ethernet": "\ueb2f",
+        "format-disconnected": "\uf064",
+        "format-disabled": "\ue648",
         "tooltip-format-wifi": "{essid} ({signalStrength}%)\n{ipaddr}",
         "tooltip-format-ethernet": "{ifname}\n{ipaddr}",
         "on-click": "~/.config/hypr/scripts/wifi-menu.sh",
         "format-icons": [
-            "\udb82\udd1f",
-            "\udb82\udd22",
-            "\udb82\udd25",
-            "\udb82\udd28"
+            "\uebe4",
+            "\uebd6",
+            "\uebe1",
+            "\uf065"
         ]
     },
     "bluetooth": {
-        "format": "\udb80\udcaf",
-        "format-off": "\udb80\udcb2",
-        "format-disabled": "\udb80\udcb2",
-        "format-connected": "\udb80\udcb1",
+        "format": "\ue1a7",
+        "format-off": "\ue1a9",
+        "format-disabled": "\ue1a9",
+        "format-connected": "\ue1a8",
         "format-no-controller": "",
         "tooltip-format-connected": "{device_enumerate}",
         "tooltip-format-enumerate-connected": "{device_alias}",
@@ -96,20 +96,20 @@
             "warning": 20,
             "critical": 10
         },
-        "format": "<span size='12pt'>{icon}</span> {capacity}%",
-        "format-charging": "<span size='12pt'>\udb80\udc84</span> {capacity}%",
-        "format-plugged": "<span size='12pt'>\udb81\udea5</span> {capacity}%",
+        "format": "<span size='13.5pt' rise='-1.5pt' font_family='Material Symbols Filled'>{icon}</span> <span rise='3pt'>{capacity}%</span>",
+        "format-charging": "<span size='13.5pt' rise='-1.5pt' font_family='Material Symbols Filled'>\ue1a3</span> <span rise='3pt'>{capacity}%</span>",
+        "format-plugged": "<span size='13.5pt' rise='-1.5pt' font_family='Material Symbols Filled'>\ue63c</span> <span rise='3pt'>{capacity}%</span>",
         "format-icons": [
-            "\udb80\udc7a",
-            "\udb80\udc7c",
-            "\udb80\udc7e",
-            "\udb80\udc80",
-            "\udb80\udc79"
+            "\uf09c",
+            "\uf09e",
+            "\uf0a0",
+            "\uf0a1",
+            "\ue1a5"
         ],
         "tooltip-format": "{timeTo}"
     },
     "custom/power": {
-        "format": "\udb81\udc25",
+        "format": "\uf8c7",
         "tooltip": false,
         "on-click": "~/.config/hypr/scripts/powermenu.sh"
     },
@@ -128,11 +128,11 @@
         }
     },
     "custom/expand": {
-        "format": "\udb80\udd41",
+        "format": "\ue5cb",
         "tooltip-format": "Hidden icons"
     },
     "tray": {
-        "spacing": 14,
-        "icon-size": 18
+        "spacing": 8,
+        "icon-size": 16
     }
 }

@@ -51,6 +51,8 @@ local menu        = "fuzzel"
 -- Activate graphical-session.target so systemd user services that require it (xdg-desktop-portal) can start
 hl.on("hyprland.start", function ()
     hl.exec_cmd("systemctl --user start hyprland-session.target")
+    -- GTK apps take the cursor from gsettings, not XCURSOR_THEME
+    hl.exec_cmd("gsettings set org.gnome.desktop.interface cursor-theme macOS-plain && gsettings set org.gnome.desktop.interface cursor-size 24")
 end)
 hl.on("hyprland.shutdown", function ()
     hl.exec_cmd("systemctl --user stop hyprland-session.target")
@@ -71,6 +73,9 @@ end)
 
 -- See https://wiki.hypr.land/Configuring/Advanced-and-Cool/Environment-variables/
 
+-- macOS cursor (ful1e5/apple_cursor v2.0.1, xcursor only), unpacked to ~/.local/share/icons/macOS;
+-- macOS-plain (icons stow package) inherits it and swaps the text cursor for a plain Windows-style I
+hl.env("XCURSOR_THEME", "macOS-plain")
 hl.env("XCURSOR_SIZE", "24")
 hl.env("HYPRCURSOR_SIZE", "24")
 hl.env("HYPRSHOT_DIR", os.getenv("HOME") .. "/Pictures/Screenshots")
