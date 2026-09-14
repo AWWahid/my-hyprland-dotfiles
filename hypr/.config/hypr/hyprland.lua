@@ -52,7 +52,7 @@ local menu        = "fuzzel"
 hl.on("hyprland.start", function ()
     hl.exec_cmd("systemctl --user start hyprland-session.target")
     -- GTK apps take the cursor from gsettings, not XCURSOR_THEME
-    hl.exec_cmd("gsettings set org.gnome.desktop.interface cursor-theme macOS-plain && gsettings set org.gnome.desktop.interface cursor-size 24")
+    hl.exec_cmd("gsettings set org.gnome.desktop.interface cursor-theme macOS-plain && gsettings set org.gnome.desktop.interface cursor-size 24 && gsettings set org.gnome.desktop.interface font-name 'Inter 11' && gsettings set org.gnome.desktop.interface monospace-font-name 'Geist Mono 11'")
 end)
 hl.on("hyprland.shutdown", function ()
     hl.exec_cmd("systemctl --user stop hyprland-session.target")
