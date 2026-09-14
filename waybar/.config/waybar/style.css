@@ -1,4 +1,5 @@
 @import "colors.css";
+@import "accent.css";
 
 * {
     font-family: Inter;

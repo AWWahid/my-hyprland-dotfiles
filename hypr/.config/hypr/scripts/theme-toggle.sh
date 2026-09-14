@@ -1,14 +1,19 @@
 #!/usr/bin/env bash
-# Toggle global light/dark mode, or force one with: theme-toggle.sh dark|light
+# Toggle global light/dark mode, force one with: theme-toggle.sh dark|light,
+# or re-apply the current mode (after editing ~/.config/hypr/accent.conf) with: theme-toggle.sh apply
 # color-scheme is broadcast by xdg-desktop-portal to browsers, Electron and GTK4 apps;
 # gtk-theme covers GTK3 apps. Bar/terminal/launcher/notifications swap colors files.
 iface=org.gnome.desktop.interface
 cfg=~/.config
+icons=~/.local/share/icons
 
 mode=$1
-if [ -z "$mode" ]; then
-    [ "$(gsettings get $iface color-scheme)" = "'prefer-dark'" ] && mode=light || mode=dark
-fi
+dark_now() { [ "$(gsettings get $iface color-scheme)" = "'prefer-dark'" ]; }
+case "$mode" in
+    dark|light) ;;
+    apply) dark_now && mode=dark || mode=light ;;
+    *)     dark_now && mode=light || mode=dark ;;
+esac
 
 if [ "$mode" = dark ]; then
     gsettings set $iface color-scheme prefer-dark
@@ -19,14 +24,43 @@ else
 fi
 
 ln -sfn themes/$mode.css  $cfg/waybar/colors.css
-ln -sfn themes/$mode.ini  $cfg/fuzzel/colors.ini
 ln -sfn themes/$mode      $cfg/mako/colors
 ln -sfn themes/$mode.conf $cfg/kitty/colors.conf
-ln -sfn themes/$mode.css  $cfg/gtk-3.0/gtk.css
-ln -sfn themes/$mode.css  $cfg/gtk-4.0/gtk.css
+
+# Accent: generated files (gitignored) so accent.conf stays the single source
+accent=$(sed -n "s/^$mode=#\?//p" $cfg/hypr/accent.conf)
+r=$((16#${accent:0:2})) g=$((16#${accent:2:2})) b=$((16#${accent:4:2}))
+(( r * 299 + g * 587 + b * 114 > 150000 )) && on_accent='#000000' || on_accent='#ffffff'
+
+echo "@define-color accent #$accent;" > $cfg/waybar/accent.css
+
+rm -f $cfg/fuzzel/colors.ini   # was a symlink into themes/; don't write through it
+{ cat $cfg/fuzzel/themes/$mode.ini; echo "match=${accent}ff"; echo "selection-match=${accent}ff"; } > $cfg/fuzzel/colors.ini
+
+for gtk in gtk-3.0 gtk-4.0; do
+    rm -f $cfg/$gtk/gtk.css
+    cat > $cfg/$gtk/gtk.css <<EOF
+@import url("themes/$mode.css");
+@define-color accent_color #$accent;
+@define-color accent_bg_color #$accent;
+@define-color accent_fg_color $on_accent;
+@define-color theme_selected_bg_color #$accent;
+@define-color theme_selected_fg_color $on_accent;
+EOF
+done
+
+# Busy-cursor spinner, rebuilt only when accent.conf is newer than the generated theme
+theme=macOS-accent-$mode
+if [ ! -f $icons/$theme/index.theme ] || [ $cfg/hypr/accent.conf -nt $icons/$theme/index.theme ]; then
+    rm -rf $icons/$theme
+    python3 $cfg/hypr/scripts/accent-cursors.py "$accent" $mode $icons/$theme
+fi
+ln -sfn $theme $icons/macOS-accent   # stable name for XCURSOR_THEME at login
+gsettings set $iface cursor-theme $theme
+hyprctl setcursor $theme 24 >/dev/null
 
 pkill -USR2 -x waybar   # reload style
 pkill -USR1 -x kitty    # reload config
 makoctl reload
 
-notify-send -t 1500 "Theme" "${mode^} mode"
+[ "$1" = apply ] || notify-send -t 1500 "Theme" "${mode^} mode"
