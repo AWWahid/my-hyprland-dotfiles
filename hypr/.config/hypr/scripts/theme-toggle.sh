@@ -59,8 +59,8 @@ if [ ! -f $icons/$theme/index.theme ] || [ $cfg/hypr/accent.conf -nt $icons/$the
 fi
 ln -sfn $theme $icons/macOS-accent   # stable name for XCURSOR_THEME at login
 gsettings set $iface cursor-theme $theme
-hyprctl setcursor macOS 24 >/dev/null   # Hyprland skips reloading an already-loaded theme name
-hyprctl setcursor $theme 24 >/dev/null
+hyprctl setcursor macOS 28 >/dev/null   # Hyprland skips reloading an already-loaded theme name
+hyprctl setcursor $theme 28 >/dev/null
 
 pkill -USR2 -x waybar   # reload style
 pkill -USR1 -x kitty    # reload config

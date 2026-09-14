@@ -1,7 +1,7 @@
 {
     "layer": "top",
     "position": "bottom",
-    "height": 26,
+    "height": 39,
     "modules-left": [
         "custom/power",
         "hyprland/workspaces"
@@ -14,7 +14,8 @@
         "network",
         "pulseaudio",
         "battery",
-        "clock"
+        "clock",
+        "custom/notifications"
     ],
     "group/dock": {
         "orientation": "horizontal",
@@ -56,9 +57,17 @@
         "interval": 60,
         "tooltip-format": "<tt>{calendar}</tt>"
     },
+    "custom/notifications": {
+        "exec": "~/.config/hypr/scripts/notifications.sh status",
+        "return-type": "json",
+        "interval": "once",
+        "signal": 8,
+        "on-click": "~/.config/hypr/scripts/notifications.sh centre",
+        "on-click-right": "~/.config/hypr/scripts/notifications.sh dnd"
+    },
     "pulseaudio": {
-        "format": "<span size='13.5pt' rise='-1.5pt' font_family='Material Symbols Filled'>{icon}</span> <span rise='3pt'>{volume}%</span>",
-        "format-muted": "<span size='13.5pt' rise='-1.5pt' font_family='Material Symbols Filled'>\ue04f</span> <span rise='3pt'>muted</span>",
+        "format": "<span size='20.25pt' rise='-2.25pt' font_family='Material Symbols Filled'>{icon}</span> <span rise='5.25pt'>{volume}%</span>",
+        "format-muted": "<span size='20.25pt' rise='-2.25pt' font_family='Material Symbols Filled'>\ue04f</span> <span rise='5.25pt'>muted</span>",
         "format-icons": {
             "default": [
                 "\ue04e",
@@ -102,9 +111,9 @@
             "warning": 20,
             "critical": 10
         },
-        "format": "<span size='13.5pt' rise='-1.5pt' font_family='Material Symbols Filled'>{icon}</span> <span rise='3pt'>{capacity}%</span>",
-        "format-charging": "<span size='13.5pt' rise='-1.5pt' font_family='Material Symbols Filled'>\ue1a3</span> <span rise='3pt'>{capacity}%</span>",
-        "format-plugged": "<span size='13.5pt' rise='-1.5pt' font_family='Material Symbols Filled'>\ue63c</span> <span rise='3pt'>{capacity}%</span>",
+        "format": "<span size='20.25pt' rise='-2.25pt' font_family='Material Symbols Filled'>{icon}</span> <span rise='5.25pt'>{capacity}%</span>",
+        "format-charging": "<span size='20.25pt' rise='-2.25pt' font_family='Material Symbols Filled'>\ue1a3</span> <span rise='5.25pt'>{capacity}%</span>",
+        "format-plugged": "<span size='20.25pt' rise='-2.25pt' font_family='Material Symbols Filled'>\ue63c</span> <span rise='5.25pt'>{capacity}%</span>",
         "format-icons": [
             "\uf09c",
             "\uf09e",
@@ -138,7 +147,7 @@
         "tooltip-format": "Hidden icons"
     },
     "tray": {
-        "spacing": 8,
-        "icon-size": 16
+        "spacing": 12,
+        "icon-size": 24
     }
 }

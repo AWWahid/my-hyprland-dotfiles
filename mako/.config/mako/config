@@ -1,3 +1,41 @@
 font=Inter 11
-default-timeout=5000
 include=~/.config/mako/colors
+
+# macOS-style banners: top-right stack, rounded, app icon on the left, bold title over body.
+# Estimated macOS metrics (pt) x 1.12 for this ~143 ppi panel: 344 wide, 12 padding, 22 radius, 32 icon, 12 from edges, 8 gaps
+anchor=top-right
+outer-margin=4
+margin=9
+width=385
+padding=13
+border-size=1
+border-radius=25
+icon-location=left
+max-icon-size=36
+icon-border-radius=8
+format=<b>%s</b>\n%b
+default-timeout=5000
+max-visible=5
+group-by=app-name
+# History lives in scripts/notifications.sh (mako's can't remove single entries)
+history=0
+
+on-notify=exec ~/.config/hypr/scripts/notifications.sh add "$id"
+# Click opens, middle-click dismisses (both also leave the centre), right-click picks an action
+on-button-left=exec ~/.config/hypr/scripts/notifications.sh open "$id"
+on-button-middle=exec makoctl dismiss -n "$id"; ~/.config/hypr/scripts/notifications.sh rm "$id"
+on-button-right=exec makoctl menu -n "$id" -- fuzzel --dmenu --prompt "Action: "
+
+[grouped]
+format=<b>%s</b>  <small>(%g)</small>\n%b
+
+# Alerts: stay until dismissed
+[urgency=critical]
+default-timeout=0
+
+# Do Not Disturb: normal notifications go straight to the centre, alerts still show
+[mode=do-not-disturb]
+invisible=1
+
+[mode=do-not-disturb urgency=critical]
+invisible=0

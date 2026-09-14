@@ -5,7 +5,8 @@
     font-family: Inter;
     /* SF-like: round quotes/commas (ss03); fixed-width digits so the clock and percentages don't shift (tnum) */
     font-feature-settings: "ss03=1, tnum=1";
-    font-size: 13px;
+    /* macOS menu bar text (13pt) at the same physical size on this panel */
+    font-size: 14.5px;
     border: none;
     border-radius: 0;
     min-height: 0;
@@ -24,7 +25,7 @@ window#waybar {
 
 #workspaces button.active {
     color: @accent;
-    box-shadow: inset 0 -2px @accent;
+    box-shadow: inset 0 -3px @accent;
 }
 
 #workspaces button.urgent {
@@ -32,7 +33,7 @@ window#waybar {
 }
 
 /* all icons: one font size so Material Symbols' shared 24px grid keeps them optically equal.
-   18px glyph + 4px padding each side = 26px hit target; padding is the gap, so there is no dead zone */
+   27px glyph + 6px padding each side = 39px hit target; padding is the gap, so there is no dead zone */
 #custom-power,
 #custom-expand,
 #custom-files,
@@ -41,9 +42,10 @@ window#waybar {
 #custom-zed,
 #custom-notepad,
 #network,
-#bluetooth {
+#bluetooth,
+#custom-notifications {
     font-family: "Material Symbols Filled";
-    font-size: 18px;
+    font-size: 27px;
 }
 
 /* revealed drawer icons get a faint tint, so an open drawer is obvious */
@@ -60,7 +62,7 @@ window#waybar {
 }
 
 #workspaces button {
-    min-width: 26px;
+    min-width: 39px;
     padding: 0;
 }
 
@@ -75,15 +77,16 @@ window#waybar {
 #custom-terminal,
 #custom-firefox,
 #custom-zed,
-#custom-notepad {
-    padding: 0 4px;
+#custom-notepad,
+#custom-notifications {
+    padding: 0 6px;
 }
 
 /* text modules get a wider gap so the percentages don't run into the next icon */
 #pulseaudio,
 #battery,
 #clock {
-    padding: 0 8px;
+    padding: 0 12px;
 }
 
 #pulseaudio.muted,
@@ -91,6 +94,15 @@ window#waybar {
 #network.disabled,
 #bluetooth.off {
     color: @muted;
+}
+
+/* notification slot: bell, bell with dot when the centre has entries, accent moon for Do Not Disturb */
+#custom-notifications {
+    margin-right: 6px;
+}
+
+#custom-notifications.dnd {
+    color: @accent;
 }
 
 #battery.warning:not(.charging) {
@@ -109,29 +121,29 @@ window#waybar {
 /* wifi wedge is wide, solid and top-heavy: drawn smaller; its point makes it read low, so it's lifted
    (negative margin cancels the padding so the bar height doesn't change) */
 #network {
-    font-size: 16px;
-    padding-bottom: 1px;
-    margin-top: -1px;
+    font-size: 24px;
+    padding-bottom: 2px;
+    margin-top: -2px;
 }
 
 /* chevron and code brackets are thin strokes, drawn larger to match the solid icons */
 #custom-expand {
-    font-size: 20px;
-    padding-bottom: 1px;
-    margin-top: -1px;
+    font-size: 30px;
+    padding-bottom: 2px;
+    margin-top: -2px;
 }
 
-/* app launchers are the main targets: bigger glyphs and wider hit areas (22px + 6px each side = 34px) */
+/* app launchers are the main targets: bigger glyphs and wider hit areas (33px + 9px each side = 51px) */
 #custom-files,
 #custom-terminal,
 #custom-firefox,
 #custom-zed,
 #custom-notepad {
-    font-size: 22px;
-    padding: 0 6px;
+    font-size: 33px;
+    padding: 0 9px;
 }
 
 /* breathing room between power and the workspace numbers */
 #custom-power {
-    margin-right: 4px;
+    margin-right: 6px;
 }
