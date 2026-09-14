@@ -35,7 +35,8 @@ r=$((16#${accent:0:2})) g=$((16#${accent:2:2})) b=$((16#${accent:4:2}))
 echo "@define-color accent #$accent;" > $cfg/waybar/accent.css
 
 rm -f $cfg/fuzzel/colors.ini   # was a symlink into themes/; don't write through it
-{ cat $cfg/fuzzel/themes/$mode.ini; echo "match=${accent}ff"; echo "selection-match=${accent}ff"; } > $cfg/fuzzel/colors.ini
+# Selection matches waybar's active style: accent at 15% (0x26) behind normal text
+{ cat $cfg/fuzzel/themes/$mode.ini; echo "match=${accent}ff"; echo "selection=${accent}26"; echo "selection-match=${accent}ff"; } > $cfg/fuzzel/colors.ini
 
 for gtk in gtk-3.0 gtk-4.0; do
     rm -f $cfg/$gtk/gtk.css
@@ -51,12 +52,14 @@ done
 
 # Busy-cursor spinner, rebuilt only when accent.conf is newer than the generated theme
 theme=macOS-accent-$mode
-if [ ! -f $icons/$theme/index.theme ] || [ $cfg/hypr/accent.conf -nt $icons/$theme/index.theme ]; then
+gen=$cfg/hypr/scripts/accent-cursors.py
+if [ ! -f $icons/$theme/index.theme ] || [ $cfg/hypr/accent.conf -nt $icons/$theme/index.theme ] || [ $gen -nt $icons/$theme/index.theme ]; then
     rm -rf $icons/$theme
-    python3 $cfg/hypr/scripts/accent-cursors.py "$accent" $mode $icons/$theme
+    python3 $gen "$accent" $mode $icons/$theme
 fi
 ln -sfn $theme $icons/macOS-accent   # stable name for XCURSOR_THEME at login
 gsettings set $iface cursor-theme $theme
+hyprctl setcursor macOS 24 >/dev/null   # Hyprland skips reloading an already-loaded theme name
 hyprctl setcursor $theme 24 >/dev/null
 
 pkill -USR2 -x waybar   # reload style

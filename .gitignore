@@ -11,6 +11,7 @@
 
 # Hardware/Device specific local overrides
 *.local
+!icons/.local
 
 # OS garbage
 .DS_Store
