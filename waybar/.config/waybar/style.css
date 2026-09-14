@@ -38,6 +38,7 @@ window#waybar {
 #custom-terminal,
 #custom-firefox,
 #custom-zed,
+#custom-notepad,
 #network,
 #bluetooth {
     font-family: "Material Symbols Filled";
@@ -52,7 +53,8 @@ window#waybar {
 #custom-files:hover,
 #custom-terminal:hover,
 #custom-firefox:hover,
-#custom-zed:hover {
+#custom-zed:hover,
+#custom-notepad:hover {
     color: @accent;
 }
 
@@ -71,7 +73,8 @@ window#waybar {
 #custom-files,
 #custom-terminal,
 #custom-firefox,
-#custom-zed {
+#custom-zed,
+#custom-notepad {
     padding: 0 4px;
 }
 
@@ -121,7 +124,8 @@ window#waybar {
 #custom-files,
 #custom-terminal,
 #custom-firefox,
-#custom-zed {
+#custom-zed,
+#custom-notepad {
     font-size: 22px;
     padding: 0 6px;
 }

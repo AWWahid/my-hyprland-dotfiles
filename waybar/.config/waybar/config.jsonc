@@ -22,7 +22,8 @@
             "custom/files",
             "custom/terminal",
             "custom/firefox",
-            "custom/zed"
+            "custom/zed",
+            "custom/notepad"
         ]
     },
     "custom/files": {
@@ -44,6 +45,11 @@
         "format": "\ue86f",
         "tooltip-format": "Zed",
         "on-click": "~/.local/bin/zed"
+    },
+    "custom/notepad": {
+        "format": "\uf040",
+        "tooltip-format": "Notepad",
+        "on-click": "mousepad"
     },
     "clock": {
         "format": "{:%a %d %b  %I:%M %p}",
