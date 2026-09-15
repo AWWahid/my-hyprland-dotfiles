@@ -14,11 +14,11 @@ const MONTHS: [&str; 12] = [
 ];
 
 // Colors come from ~/.config/gtk-4.0/gtk.css (theme + accent written by theme-toggle.sh).
-// The whole panel (text included) is drawn at the windows' 0.85 opacity; blur comes from Hyprland's layer rule.
+// The panel background is 0.85 like windows (text stays solid); blur comes from Hyprland's layer rule.
 const CSS: &str = r#"
 window { background: transparent; }
 .panel {
-    background: @window_bg_color;
+    background: alpha(@window_bg_color, 0.85);
     border: 1px solid alpha(currentColor, 0.2);
     border-radius: 30px;
     padding: 16px 18px 18px;
@@ -95,7 +95,6 @@ fn main() {
 
     let panel = gtk::Box::new(gtk::Orientation::Vertical, 10);
     panel.add_css_class("panel");
-    panel.set_opacity(0.85);
     panel.set_halign(gtk::Align::End);
     panel.set_valign(gtk::Align::End);
     panel.set_margin_end(6);

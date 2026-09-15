@@ -134,9 +134,8 @@ hl.config({
         rounding       = 0,
         rounding_power = 2,
 
-        -- Change transparency of focused and unfocused windows
-        active_opacity   = 0.85,
-        inactive_opacity = 0.85,
+        -- No active/inactive_opacity: it fades text too. Apps draw 0.85 backgrounds themselves
+        -- (kitty, zed, waybar, fuzzel, mako, calendar, powermenu) so text stays solid
 
         -- Darken unfocused windows (focus indicator, since borders are off)
         dim_inactive = true,
@@ -293,7 +292,7 @@ hl.bind(mainMod .. " + R", hl.dsp.exec_cmd(menu))
 hl.bind(mainMod .. " + P", hl.dsp.window.pseudo())
 hl.bind(mainMod .. " + J", hl.dsp.layout("togglesplit"))    -- dwindle only
 hl.bind(mainMod .. " + L",      hl.dsp.exec_cmd("loginctl lock-session"))
-hl.bind(mainMod .. " + escape", hl.dsp.exec_cmd("~/.config/hypr/scripts/powermenu.sh"))
+hl.bind(mainMod .. " + escape", hl.dsp.exec_cmd("pkill -x powermenu || powermenu"))
 hl.bind(mainMod .. " + W",      hl.dsp.exec_cmd("~/.config/hypr/scripts/wallpaper.sh"))
 hl.bind(mainMod .. " + SHIFT + D", hl.dsp.exec_cmd("~/.config/hypr/scripts/theme-toggle.sh"))  -- light/dark toggle
 
@@ -410,17 +409,19 @@ hl.window_rule({
     opaque = true,
 })
 
--- Bar, launcher and notification centre (fuzzel), notifications (mako) and calendar popup match window transparency with the same blur
+-- Bar, launcher and notification centre (fuzzel), notifications (mako), calendar popup and power menu match window transparency with the same blur
+-- xray like windows: without it layers blur the (already darkened) windows behind them and look darker
 hl.layer_rule({
     name  = "blur-layers",
-    match = { namespace = "^(waybar|launcher|notifications|calendar)$" },
+    match = { namespace = "^(waybar|launcher|notifications|calendar|powermenu)$" },
     blur  = true,
+    xray  = true,
 })
 
--- The calendar popup is a full-screen transparent layer (clicking outside closes it); blur only its panel
+-- The calendar popup and power menu are full-screen transparent layers (clicking outside closes them); blur only their panels
 hl.layer_rule({
-    name         = "calendar-panel-only",
-    match        = { namespace = "^calendar$" },
+    name         = "popup-panel-only",
+    match        = { namespace = "^(calendar|powermenu)$" },
     ignore_alpha = 0.01,
 })
 
