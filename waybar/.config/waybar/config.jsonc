@@ -55,7 +55,8 @@
     "clock": {
         "format": "{:%a %d %b  %I:%M %p}",
         "interval": 60,
-        "tooltip-format": "<tt>{calendar}</tt>"
+        "tooltip": false,
+        "on-click": "pkill -x calendar-popup || calendar-popup"
     },
     "custom/notifications": {
         "exec": "~/.config/hypr/scripts/notifications.sh status",

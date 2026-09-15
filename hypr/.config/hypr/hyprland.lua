@@ -410,11 +410,18 @@ hl.window_rule({
     opaque = true,
 })
 
--- Bar, launcher and notification centre (fuzzel) and notifications (mako) match window transparency (0.85 bg) with the same blur
+-- Bar, launcher and notification centre (fuzzel), notifications (mako) and calendar popup match window transparency with the same blur
 hl.layer_rule({
     name  = "blur-layers",
-    match = { namespace = "^(waybar|launcher|notifications)$" },
+    match = { namespace = "^(waybar|launcher|notifications|calendar)$" },
     blur  = true,
+})
+
+-- The calendar popup is a full-screen transparent layer (clicking outside closes it); blur only its panel
+hl.layer_rule({
+    name         = "calendar-panel-only",
+    match        = { namespace = "^calendar$" },
+    ignore_alpha = 0.01,
 })
 
 -- Layer rules also return a handle.

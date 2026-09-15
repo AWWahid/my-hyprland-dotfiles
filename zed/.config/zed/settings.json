@@ -16,15 +16,32 @@
     "trust_all_worktrees": true
   },
   "base_keymap": "VSCode",
-  "icon_theme": "Zed (Default)",
+  "icon_theme": "Symbols Icon Theme",
   "ui_font_family": "Inter",
   "ui_font_size": 19,
   "buffer_font_family": "Geist Mono",
   "buffer_font_size": 20,
   "buffer_line_height": "standard",
+  "project_panel": { "dock": "left" },
   "theme": {
     "mode": "dark",
-    "light": "Ayu Light",
-    "dark": "The Dark Side",
+    "light": "Xcode Default Light",
+    "dark": "Xcode Midnight",
+  },
+  "auto_install_extensions": { "xcode-themes": true, "symbols": true },
+  // Midnight is already black in the editor; make its grey panels/bars black too
+  // (Hyprland's window opacity and blur show through black)
+  "theme_overrides": {
+    "Xcode Midnight": {
+      "panel.background": "#000000",
+      "surface.background": "#000000",
+      "element.background": "#000000",
+      "elevated_surface.background": "#0d0d0d",
+      "title_bar.background": "#000000",
+      "status_bar.background": "#000000",
+      "tab_bar.background": "#000000",
+      "tab.inactive_background": "#000000",
+      "editor.subheader.background": "#000000",
+    },
   },
 }
