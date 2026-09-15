@@ -9,3 +9,8 @@
 @define-color dialog_bg_color #000000;
 @define-color card_bg_color #0d0d0d;
 @define-color popover_bg_color #0d0d0d;
+
+headerbar image, toolbar image, .sidebar image { -gtk-icon-size: 20px; }
+check, radio { min-width: 16px; min-height: 16px; }
+button, entry, spinbutton, dropdown > button { min-height: 22px; padding-top: 3px; padding-bottom: 3px; }
+popover.menu modelbutton { min-height: 26px; }

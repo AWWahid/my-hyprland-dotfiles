@@ -30,7 +30,7 @@
     "custom/files": {
         "format": "\ue2c7",
         "tooltip-format": "Files",
-        "on-click": "kitty -e yazi"
+        "on-click": "kitty -c ~/.config/kitty/yazi.conf -e yazi"
     },
     "custom/terminal": {
         "format": "\ueb8e",

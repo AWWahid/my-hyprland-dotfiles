@@ -1,18 +1,17 @@
-font=Inter 11
+font=Inter 12
 include=~/.config/mako/colors
 
 # macOS-style banners: top-right stack, rounded, app icon on the left, bold title over body.
-# Estimated macOS metrics (pt) x 1.12 for this ~143 ppi panel: 344 wide, 12 padding, 22 radius, 32 icon, 12 from edges, 8 gaps
 anchor=top-right
-outer-margin=4
-margin=9
-width=385
-padding=13
+outer-margin=6
+margin=10
+width=430
+padding=17
 border-size=1
-border-radius=25
+border-radius=30
 icon-location=left
-max-icon-size=36
-icon-border-radius=8
+max-icon-size=40
+icon-border-radius=9
 format=<b>%s</b>\n%b
 default-timeout=5000
 max-visible=5

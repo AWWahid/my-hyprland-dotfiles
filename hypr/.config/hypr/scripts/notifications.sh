@@ -65,8 +65,8 @@ centre)
             | (if $s < 60 then "now" elif $s < 3600 then "\($s / 60 | floor)m"
                elif $s < 86400 then "\($s / 3600 | floor)h" else "\($s / 86400 | floor)d" end) as $ago
             | "\(.app)  ·  \(.summary) — \(.body | gsub("\\s+"; " "))  ·  \($ago)"'
-    } | fuzzel --dmenu --index --no-sort --minimal-lines --lines 12 --width 50 \
-        --anchor top-right --x-margin 13 --y-margin 13 --prompt "Notifications: ") || exit 0
+    } | fuzzel --dmenu --index --no-sort --minimal-lines --lines 12 --width 40 \
+        --anchor top-right --x-margin 16 --y-margin 16 --prompt "Notifications: ") || exit 0
 
     case "$choice" in
     0) "$0" dnd ;;
@@ -77,7 +77,7 @@ centre)
         [ -n "$id" ] || exit 0
         open=$(printf '\356\242\236')   # U+E89E open_in_new
         case $(printf '%s\n' "$open  Open" "$clear  Remove" | fuzzel --dmenu --index --lines 2 --width 20 \
-            --anchor top-right --x-margin 13 --y-margin 13 --prompt "Notification: ") in
+            --anchor top-right --x-margin 16 --y-margin 16 --prompt "Notification: ") in
         0) "$0" open "$id" ;;
         1) makoctl dismiss -n "$id" 2>/dev/null; "$0" rm "$id"; exec "$0" centre ;;
         *) exec "$0" centre ;;   # Escape goes back to the list
