@@ -18,9 +18,9 @@
   "base_keymap": "VSCode",
   "icon_theme": "Zed (Default)",
   "ui_font_family": "Inter",
-  "ui_font_size": 16,
+  "ui_font_size": 19,
   "buffer_font_family": "Geist Mono",
-  "buffer_font_size": 15,
+  "buffer_font_size": 16,
   "buffer_line_height": "standard",
   "theme": {
     "mode": "dark",

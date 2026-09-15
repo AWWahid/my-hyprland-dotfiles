@@ -54,7 +54,7 @@ hl.on("hyprland.start", function ()
     -- GTK apps take the cursor from gsettings, not XCURSOR_THEME (theme-toggle.sh sets cursor-theme)
     hl.exec_cmd("gsettings set org.gnome.desktop.interface cursor-size 32 && gsettings set org.gnome.desktop.interface font-name 'Inter 12' && gsettings set org.gnome.desktop.interface monospace-font-name 'Geist Mono 12'")
     -- Mousepad as a TextEdit equivalent: Helvetica clone (Nimbus Sans) like TextEdit's default
-    hl.exec_cmd("gsettings set org.xfce.mousepad.preferences.view use-default-monospace-font false && gsettings set org.xfce.mousepad.preferences.view font-name 'Nimbus Sans 11'")
+    hl.exec_cmd("gsettings set org.xfce.mousepad.preferences.view use-default-monospace-font false && gsettings set org.xfce.mousepad.preferences.view font-name 'Nimbus Sans 13'")
 end)
 hl.on("hyprland.shutdown", function ()
     hl.exec_cmd("systemctl --user stop hyprland-session.target")
