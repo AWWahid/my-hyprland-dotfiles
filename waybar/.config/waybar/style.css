@@ -5,8 +5,7 @@
     font-family: Inter;
     /* SF-like: round quotes/commas (ss03); fixed-width digits so the clock and percentages don't shift (tnum) */
     font-feature-settings: "ss03=1, tnum=1";
-    /* macOS menu bar text (13pt) at the same physical size on this panel */
-    font-size: 14.5px;
+    font-size: 18px;
     border: none;
     border-radius: 0;
     min-height: 0;
