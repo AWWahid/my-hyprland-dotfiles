@@ -1,3 +1,6 @@
 @define-color bg #000000;
 @define-color fg #e6e6e6;
 @define-color muted #808080;
+@define-color battery_power #30d158;
+@define-color battery_discharging #ffd60a;
+@define-color battery_low #ff453a;

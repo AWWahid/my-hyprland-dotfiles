@@ -109,8 +109,7 @@
         "bat": "BAT0",
         "interval": 60,
         "states": {
-            "warning": 20,
-            "critical": 10
+            "low": 20
         },
         "format": "<span size='20.25pt' rise='-2.25pt' font_family='Material Symbols Filled'>{icon}</span> <span rise='5.25pt'>{capacity}%</span>",
         "format-charging": "<span size='20.25pt' rise='-2.25pt' font_family='Material Symbols Filled'>\ue1a3</span> <span rise='5.25pt'>{capacity}%</span>",

@@ -1,5 +1,6 @@
 @import "colors.css";
 @import "accent.css";
+@import "icons.css";
 
 * {
     font-family: Inter;
@@ -45,6 +46,7 @@ window#waybar {
 #custom-notifications {
     font-family: "Material Symbols Filled";
     font-size: 27px;
+    color: @icon;
 }
 
 /* revealed drawer icons get a faint tint, so an open drawer is obvious */
@@ -52,13 +54,7 @@ window#waybar {
     background: alpha(@accent, 0.15);
 }
 
-#custom-files:hover,
-#custom-terminal:hover,
-#custom-firefox:hover,
-#custom-zed:hover,
-#custom-notepad:hover {
-    color: @accent;
-}
+/* icon color and hover style come from icons.css (themes/icons-*.css, picked in the personalize panel) */
 
 #workspaces button {
     min-width: 39px;
@@ -104,12 +100,19 @@ window#waybar {
     color: @accent;
 }
 
-#battery.warning:not(.charging) {
-    color: #ffcc00;
+/* battery: green on power, yellow on battery, red at 20% or below */
+#battery {
+    color: @battery_discharging;
 }
 
-#battery.critical:not(.charging) {
-    color: #ff4444;
+#battery.charging,
+#battery.plugged,
+#battery.full {
+    color: @battery_power;
+}
+
+#battery.low:not(.charging):not(.plugged):not(.full) {
+    color: @battery_low;
 }
 
 #custom-power {

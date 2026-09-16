@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Toggle global light/dark mode, force one with: theme-toggle.sh dark|light,
-# or re-apply the current mode (after editing ~/.config/hypr/accent.conf) with: theme-toggle.sh apply
+# or re-apply the current mode (after the personalize panel rewrites ~/.config/hypr/accent.conf) with: theme-toggle.sh apply
 # color-scheme is broadcast by xdg-desktop-portal to browsers, Electron and GTK4 apps;
 # gtk-theme covers GTK3 apps. Bar/terminal/launcher/notifications swap colors files.
 iface=org.gnome.desktop.interface
@@ -27,12 +27,27 @@ ln -sfn themes/$mode.css  $cfg/waybar/colors.css
 ln -sfn themes/$mode      $cfg/mako/colors
 ln -sfn themes/$mode.conf $cfg/kitty/colors.conf
 
-# Accent: generated files (gitignored) so accent.conf stays the single source
+# Accent: generated files (gitignored) so accent.conf stays the single source.
+# accent.conf and icons.css are personalize's state (gitignored); defaults on a fresh install
+[ -f $cfg/hypr/accent.conf ] || printf 'source=wallpaper\ndark=#33ccff\nlight=#0077b3\n' > $cfg/hypr/accent.conf
+[ -L $cfg/waybar/icons.css ] || ln -sfn themes/icons-mono.css $cfg/waybar/icons.css
 accent=$(sed -n "s/^$mode=#\?//p" $cfg/hypr/accent.conf)
 r=$((16#${accent:0:2})) g=$((16#${accent:2:2})) b=$((16#${accent:4:2}))
 (( r * 299 + g * 587 + b * 114 > 150000 )) && on_accent='#000000' || on_accent='#ffffff'
 
 echo "@define-color accent #$accent;" > $cfg/waybar/accent.css
+
+# Yazi: accent on its interface (cwd, tabs, mode, borders, hovered file); file type colors stay on the terminal palette.
+# Read at startup, so an open yazi picks it up next launch
+{
+    echo "[mgr]";       echo "cwd = { fg = \"#$accent\" }"
+    echo "[tabs]";      echo "active = { fg = \"$on_accent\", bg = \"#$accent\", bold = true }"; echo "inactive = { fg = \"#$accent\" }"
+    echo "[mode]";      echo "normal_main = { fg = \"$on_accent\", bg = \"#$accent\", bold = true }"; echo "normal_alt = { fg = \"#$accent\" }"
+    echo "[indicator]"; echo "current = { fg = \"$on_accent\", bg = \"#$accent\" }"; echo "parent = { fg = \"$on_accent\", bg = \"#$accent\" }"
+    for section in which confirm spot pick input cmp tasks help; do
+        echo "[$section]"; echo "border = { fg = \"#$accent\" }"
+    done
+} > $cfg/yazi/theme.toml
 
 rm -f $cfg/fuzzel/colors.ini   # was a symlink into themes/; don't write through it
 # Selection matches waybar's active style: accent at 15% (0x26) behind normal text
@@ -66,4 +81,3 @@ pkill -USR2 -x waybar   # reload style
 pkill -USR1 -x kitty    # reload config
 makoctl reload
 
-[ "$1" = apply ] || notify-send -t 1500 "Theme" "${mode^} mode"

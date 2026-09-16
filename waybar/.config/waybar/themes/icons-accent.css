@@ -1,0 +1,18 @@
+/* Accent icons: hover can't be an accent tint, so it's a faint rounded highlight behind the item */
+@define-color icon @accent;
+
+#custom-expand:hover,
+#custom-files:hover,
+#custom-terminal:hover,
+#custom-firefox:hover,
+#custom-zed:hover,
+#custom-notepad:hover,
+#network:hover,
+#bluetooth:hover,
+#custom-notifications:hover,
+#pulseaudio:hover,
+#clock:hover,
+#custom-power:hover {
+    background: alpha(@fg, 0.12);
+    border-radius: 8px;
+}

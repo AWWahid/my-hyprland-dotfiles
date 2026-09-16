@@ -293,7 +293,7 @@ hl.bind(mainMod .. " + P", hl.dsp.window.pseudo())
 hl.bind(mainMod .. " + J", hl.dsp.layout("togglesplit"))    -- dwindle only
 hl.bind(mainMod .. " + L",      hl.dsp.exec_cmd("loginctl lock-session"))
 hl.bind(mainMod .. " + escape", hl.dsp.exec_cmd("pkill -x powermenu || powermenu"))
-hl.bind(mainMod .. " + W",      hl.dsp.exec_cmd("~/.config/hypr/scripts/wallpaper.sh"))
+hl.bind(mainMod .. " + W",      hl.dsp.exec_cmd("pkill -x personalize || personalize"))  -- appearance, accent, bar icons, wallpaper
 hl.bind(mainMod .. " + SHIFT + D", hl.dsp.exec_cmd("~/.config/hypr/scripts/theme-toggle.sh"))  -- light/dark toggle
 
 -- Screenshots, Windows style (clipboard only; click the notification to edit in satty)
@@ -409,20 +409,28 @@ hl.window_rule({
     opaque = true,
 })
 
--- Bar, launcher and notification centre (fuzzel), notifications (mako), calendar popup and power menu match window transparency with the same blur
+-- Bar, launcher and notification centre (fuzzel), notifications (mako), calendar popup, power menu and personalize panel match window transparency with the same blur
 -- xray like windows: without it layers blur the (already darkened) windows behind them and look darker
 hl.layer_rule({
     name  = "blur-layers",
-    match = { namespace = "^(waybar|launcher|notifications|calendar|powermenu)$" },
+    match = { namespace = "^(waybar|launcher|notifications|calendar|powermenu|personalize)$" },
     blur  = true,
     xray  = true,
 })
 
--- The calendar popup and power menu are full-screen transparent layers (clicking outside closes them); blur only their panels
+-- Blur only the visible panels, not the transparent parts: the calendar popup, power menu and personalize panel
+-- are full-screen transparent layers (clicking outside closes them); the launcher and notifications have rounded corners
 hl.layer_rule({
     name         = "popup-panel-only",
-    match        = { namespace = "^(calendar|powermenu)$" },
+    match        = { namespace = "^(calendar|powermenu|personalize|notifications|launcher)$" },
     ignore_alpha = 0.01,
+})
+
+-- Personalize opens and closes instantly, no fade
+hl.layer_rule({
+    name    = "no-anim-personalize",
+    match   = { namespace = "^personalize$" },
+    no_anim = true,
 })
 
 -- Layer rules also return a handle.
