@@ -40,7 +40,7 @@
     "custom/firefox": {
         "format": "\ue80b",
         "tooltip-format": "Firefox",
-        "on-click": "firefox"
+        "on-click": "flatpak run org.mozilla.firefox"
     },
     "custom/zed": {
         "format": "\ue86f",
