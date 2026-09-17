@@ -1,0 +1,58 @@
+# Light base for btop, matching kitty/waybar light.
+# main_bg stays empty so the terminal (and Hyprland's blur) shows through.
+# Accent-driven keys (hi_fg, selected_*) are appended by theme-toggle.sh into accent.theme.
+
+theme[main_bg]=""
+theme[main_fg]="#1a1a1a"
+theme[title]="#000000"
+theme[hi_fg]="#0077b3"
+theme[selected_bg]="#cce6ff"
+theme[selected_fg]="#000000"
+theme[inactive_fg]="#b3b3b3"
+theme[graph_text]="#7a7a7a"
+theme[meter_bg]="#d9d9d9"
+theme[proc_misc]="#7a7a7a"
+
+# Box outlines: hairlines, like Activity Monitor's table rules
+theme[cpu_box]="#d0d0d0"
+theme[mem_box]="#d0d0d0"
+theme[net_box]="#d0d0d0"
+theme[proc_box]="#d0d0d0"
+theme[div_line]="#d0d0d0"
+
+# Temperature: macOS light system green -> yellow -> red
+theme[temp_start]="#248a3d"
+theme[temp_mid]="#c88800"
+theme[temp_end]="#d70015"
+
+# CPU load
+theme[cpu_start]="#248a3d"
+theme[cpu_mid]="#c88800"
+theme[cpu_end]="#d70015"
+
+# Memory: free/cached/available stay cool, used warms up like macOS memory pressure
+theme[free_start]="#a8ddb8"
+theme[free_mid]="#5cb87a"
+theme[free_end]="#248a3d"
+theme[cached_start]="#9ccaf5"
+theme[cached_mid]="#4a9ae8"
+theme[cached_end]="#0071e3"
+theme[available_start]="#d0d0d0"
+theme[available_mid]="#9a9a9a"
+theme[available_end]="#4d4d4d"
+theme[used_start]="#248a3d"
+theme[used_mid]="#c88800"
+theme[used_end]="#d70015"
+
+# Network: received blue, sent red, as in Activity Monitor's network graph
+theme[download_start]="#9ccaf5"
+theme[download_mid]="#4a9ae8"
+theme[download_end]="#0071e3"
+theme[upload_start]="#f5a8a3"
+theme[upload_mid]="#e8554a"
+theme[upload_end]="#d70015"
+
+# Flat process rows (proc_gradient is off) so the table reads like a list, not a heatmap
+theme[process_start]="#1a1a1a"
+theme[process_mid]="#1a1a1a"
+theme[process_end]="#1a1a1a"

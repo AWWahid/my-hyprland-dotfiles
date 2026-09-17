@@ -41,6 +41,7 @@ window#waybar {
 #custom-firefox,
 #custom-zed,
 #custom-notepad,
+#custom-activity,
 #network,
 #bluetooth,
 #custom-notifications {
@@ -73,6 +74,7 @@ window#waybar {
 #custom-firefox,
 #custom-zed,
 #custom-notepad,
+#custom-activity,
 #custom-notifications {
     padding: 0 6px;
 }
@@ -147,7 +149,8 @@ window#waybar {
 #custom-terminal,
 #custom-firefox,
 #custom-zed,
-#custom-notepad {
+#custom-notepad,
+#custom-activity {
     font-size: 33px;
     padding: 0 9px;
 }

@@ -24,7 +24,8 @@
             "custom/terminal",
             "custom/firefox",
             "custom/zed",
-            "custom/notepad"
+            "custom/notepad",
+            "custom/activity"
         ]
     },
     "custom/files": {
@@ -46,6 +47,11 @@
         "format": "\ue86f",
         "tooltip-format": "Zed",
         "on-click": "~/.local/bin/zed"
+    },
+    "custom/activity": {
+        "format": "\uf190",
+        "tooltip-format": "Activity Monitor",
+        "on-click": "kitty --class activity-monitor -c ~/.config/kitty/activity.conf -e btop"
     },
     "custom/notepad": {
         "format": "\uf040",

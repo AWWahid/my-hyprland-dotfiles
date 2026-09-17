@@ -53,6 +53,16 @@ rm -f $cfg/fuzzel/colors.ini   # was a symlink into themes/; don't write through
 # Selection matches waybar's active style: accent at 15% (0x26) behind normal text
 { cat $cfg/fuzzel/themes/$mode.ini; echo "match=${accent}ff"; echo "selection=${accent}26"; echo "selection-match=${accent}ff"; } > $cfg/fuzzel/colors.ini
 
+# btop: accent on the highlights and the selected row; the semantic gradients
+# (temperature, load, network) stay fixed. Read at startup, so an open btop picks it up next launch
+rm -f $cfg/btop/themes/accent.theme
+{
+    cat $cfg/btop/themes/$mode.theme
+    echo "theme[hi_fg]=\"#$accent\""
+    echo "theme[selected_bg]=\"#$accent\""
+    echo "theme[selected_fg]=\"$on_accent\""
+} > $cfg/btop/themes/accent.theme
+
 for gtk in gtk-3.0 gtk-4.0; do
     rm -f $cfg/$gtk/gtk.css
     cat > $cfg/$gtk/gtk.css <<EOF
