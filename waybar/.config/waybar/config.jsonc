@@ -69,10 +69,28 @@
     "pulseaudio": {
         "format": "<span size='20.25pt' rise='-2.25pt' font_family='Material Symbols Filled'>{icon}</span> <span rise='5.25pt'>{volume}%</span>",
         "format-muted": "<span size='20.25pt' rise='-2.25pt' font_family='Material Symbols Filled'>\ue04f</span> <span rise='5.25pt'>muted</span>",
+        // 20 slots = 5% bands: under 5% the speaker has no waves, up to 50% one wave, above that full
         "format-icons": {
             "default": [
                 "\ue04e",
                 "\ue04d",
+                "\ue04d",
+                "\ue04d",
+                "\ue04d",
+                "\ue04d",
+                "\ue04d",
+                "\ue04d",
+                "\ue04d",
+                "\ue04d",
+                "\ue050",
+                "\ue050",
+                "\ue050",
+                "\ue050",
+                "\ue050",
+                "\ue050",
+                "\ue050",
+                "\ue050",
+                "\ue050",
                 "\ue050"
             ]
         },

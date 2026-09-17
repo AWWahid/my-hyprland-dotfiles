@@ -84,6 +84,13 @@ window#waybar {
     padding: 0 12px;
 }
 
+/* volume and clock follow the bar icon colour like the pure-icon modules (icon and text together,
+   the way the battery colours both) */
+#pulseaudio,
+#clock {
+    color: @icon;
+}
+
 #pulseaudio.muted,
 #network.disconnected,
 #network.disabled,

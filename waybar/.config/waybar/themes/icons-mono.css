@@ -9,6 +9,8 @@
 #custom-notepad:hover,
 #network:hover,
 #bluetooth:hover,
-#custom-notifications:hover {
+#custom-notifications:hover,
+#pulseaudio:hover,
+#clock:hover {
     color: @accent;
 }
