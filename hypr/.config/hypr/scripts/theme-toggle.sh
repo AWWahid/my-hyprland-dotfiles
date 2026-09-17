@@ -65,12 +65,17 @@ for gtk in gtk-3.0 gtk-4.0; do
 EOF
 done
 
-# Busy-cursor spinner, rebuilt only when accent.conf is newer than the generated theme
+# Busy-cursor spinner. index.theme records the accent it was built with, so re-picking the same
+# color is free; personalize rewrites accent.conf every time, which is why mtime won't do.
 theme=macOS-accent-$mode
-gen=$cfg/hypr/scripts/accent-cursors.py
-if [ ! -f $icons/$theme/index.theme ] || [ $cfg/hypr/accent.conf -nt $icons/$theme/index.theme ] || [ $gen -nt $icons/$theme/index.theme ]; then
+index=$icons/$theme/index.theme
+gen=$HOME/.local/bin/accent-cursors
+[ -x "$gen" ] || gen=$(command -v accent-cursors)
+if [ ! -x "$gen" ]; then
+    echo "theme-toggle: accent-cursors not installed (cargo install --path ~/dotfiles/accent-cursors --root ~/.local); keeping existing cursors" >&2
+elif [ "$(sed -n 's/^accent=#\?//p' "$index" 2>/dev/null)" != "$accent" ] || [ "$gen" -nt "$index" ]; then
     rm -rf $icons/$theme
-    python3 $gen "$accent" $mode $icons/$theme
+    "$gen" "$accent" $mode $icons/$theme
 fi
 ln -sfn $theme $icons/macOS-accent   # stable name for XCURSOR_THEME at login
 gsettings set $iface cursor-theme $theme

@@ -54,10 +54,12 @@ impl State {
     }
 }
 
-enum Op { Mode(bool), Wallpaper(PathBuf), FromWallpaper, Manual(String), Icons(bool) }
+enum Op { Mode(bool), Wallpaper(PathBuf, Option<PathBuf>), FromWallpaper(Option<PathBuf>), Manual(String), Icons(bool) }
 
 /// Sets both accents from the image, each from its own matugen run with that mode's fallback
-/// (white for dark, black for light); false (accents untouched) if matugen fails
+/// (white for dark, black for light); false (accents untouched) if matugen fails.
+/// matugen downscales to 112x112 before quantizing, so callers pass the cached
+/// thumbnail when there is one: same colors, without decoding the full image.
 fn matugen(img: &Path, s: &mut State) -> bool {
     let primary = |mode: &str, fallback: &str| -> Option<String> {
         let out = Command::new("matugen").arg("image").arg(img)
@@ -67,13 +69,7 @@ fn matugen(img: &Path, s: &mut State) -> bool {
         let json: serde_json::Value = serde_json::from_str(&text[text.find('{')?..]).ok()?;
         json["colors"]["primary"][mode]["color"].as_str().map(String::from)
     };
-    // Both at once: each run decodes the image
-    let (dark, light) = std::thread::scope(|scope| {
-        let dark = scope.spawn(|| primary("dark", "#ffffff"));
-        let light = primary("light", "#000000");
-        (dark.join().ok().flatten(), light)
-    });
-    let (Some(dark), Some(light)) = (dark, light) else { return false };
+    let (Some(dark), Some(light)) = (primary("dark", "#ffffff"), primary("light", "#000000")) else { return false };
     s.accent_dark = dark;
     s.accent_light = light;
     true
@@ -97,13 +93,13 @@ fn run(op: Op, mut s: State) {
             s.save_accent();
             theme("apply");
         }
-        Op::FromWallpaper => {
+        Op::FromWallpaper(thumb) => {
             s.from_wallpaper = true;
-            if let Some(w) = s.wallpaper.clone() { matugen(&w, &mut s); }
+            if let Some(w) = thumb.or_else(|| s.wallpaper.clone()) { matugen(&w, &mut s); }
             s.save_accent();
             theme("apply");
         }
-        Op::Wallpaper(path) => {
+        Op::Wallpaper(path, thumb) => {
             // hyprpaper.conf and hyprlock read this symlink, so the choice survives restarts
             let link = wallpaper_link();
             let tmp = link.with_extension("new");
@@ -114,7 +110,7 @@ fn run(op: Op, mut s: State) {
             let _ = Command::new("sh").args(["-c",
                 r#"hyprctl hyprpaper wallpaper ",$1" >/dev/null 2>&1 || { pkill -x hyprpaper; setsid -f hyprpaper >/dev/null 2>&1; }"#,
                 "sh"]).arg(&path).status();
-            if s.from_wallpaper && matugen(&path, &mut s) {
+            if s.from_wallpaper && matugen(thumb.as_deref().unwrap_or(&path), &mut s) {
                 s.save_accent();
                 theme("apply");
             }
@@ -122,10 +118,13 @@ fn run(op: Op, mut s: State) {
     }
 }
 
-/// (wallpaper, cached thumbnail); thumbnails are keyed by mtime so an edited image gets a new one
+/// (wallpaper, cached thumbnail); thumbnails are keyed by mtime so an edited image gets a new one.
+/// Thumbnails left over from removed or edited wallpapers are dropped here, at panel open, so
+/// nothing has to run in the background to keep the cache from growing.
 fn wallpapers() -> Vec<(PathBuf, PathBuf)> {
     let cache = home().join(".cache/personalize");
     let _ = fs::create_dir_all(&cache);
+    // Returning before the prune matters: an unreadable directory must not empty the cache
     let Ok(dir) = fs::read_dir(home().join("Pictures/Wallpapers")) else { return vec![] };
     // Formats hyprpaper can load
     let mut files: Vec<PathBuf> = dir.flatten().map(|e| e.path())
@@ -133,14 +132,21 @@ fn wallpapers() -> Vec<(PathBuf, PathBuf)> {
             .is_some_and(|e| ["png", "jpg", "jpeg", "webp", "jxl"].contains(&e.to_lowercase().as_str())))
         .collect();
     files.sort();
-    files.into_iter().filter_map(|p| {
+    let walls: Vec<(PathBuf, PathBuf)> = files.into_iter().filter_map(|p| {
         let mtime = fs::metadata(&p).ok()?.modified().ok()?.duration_since(std::time::UNIX_EPOCH).ok()?.as_secs();
         let thumb = cache.join(format!("{}-{mtime}.png", p.file_name()?.to_string_lossy()));
         if !thumb.exists() {
             gdk_pixbuf::Pixbuf::from_file_at_scale(&p, 240, 240, true).ok()?.savev(&thumb, "png", &[]).ok()?;
         }
         Some((fs::canonicalize(&p).unwrap_or(p), thumb))
-    }).collect()
+    }).collect();
+    // Thumbnails are derived data, so deleting one that is still wanted only costs a rescale
+    for stale in fs::read_dir(&cache).into_iter().flatten().flatten().map(|e| e.path()) {
+        if !walls.iter().any(|(_, thumb)| *thumb == stale) {
+            let _ = fs::remove_file(stale);
+        }
+    }
+    walls
 }
 
 fn css(s: &State, walls: &[(PathBuf, PathBuf)]) -> String {
@@ -383,7 +389,8 @@ fn appearance(ctx: &Rc<Ctx>, s: &State, pane: &gtk::Box) {
     wall_swatch.add_css_class("current-wall");
     wall_swatch.set_tooltip_text(Some("Wallpaper"));
     if s.from_wallpaper { wall_swatch.add_css_class("selected") }
-    wall_swatch.connect_clicked({ let ctx = ctx.clone(); move |_| dispatch(&ctx, Op::FromWallpaper) });
+    let cur_thumb = ctx.walls.iter().find(|(w, _)| Some(w) == s.wallpaper.as_ref()).map(|(_, t)| t.clone());
+    wall_swatch.connect_clicked({ let ctx = ctx.clone(); move |_| dispatch(&ctx, Op::FromWallpaper(cur_thumb.clone())) });
     swatches.append(&wall_swatch);
     let mut selected = if s.from_wallpaper { "Wallpaper" } else { "Custom" };
     for (i, (name, hex)) in PRESETS.iter().enumerate() {
@@ -473,12 +480,12 @@ fn wallpaper(ctx: &Rc<Ctx>, s: &State, pane: &gtk::Box) {
     grid.set_min_children_per_line(4);
     grid.set_max_children_per_line(4);
     grid.set_valign(gtk::Align::Start);
-    for (i, (wall, _)) in ctx.walls.iter().enumerate() {
+    for (i, (wall, thumb)) in ctx.walls.iter().enumerate() {
         let b = sized("thumb", 124, 70);
         b.add_css_class(&format!("wall{i}"));
         if Some(wall) == s.wallpaper.as_ref() { b.add_css_class("selected") }
-        let (current, wall) = (s.wallpaper.as_ref() == Some(wall), wall.clone());
-        b.connect_clicked({ let ctx = ctx.clone(); move |_| if !current { dispatch(&ctx, Op::Wallpaper(wall.clone())) } });
+        let (current, wall, thumb) = (s.wallpaper.as_ref() == Some(wall), wall.clone(), thumb.clone());
+        b.connect_clicked({ let ctx = ctx.clone(); move |_| if !current { dispatch(&ctx, Op::Wallpaper(wall.clone(), Some(thumb.clone()))) } });
         grid.append(&b);
     }
     pane.append(&grid);
