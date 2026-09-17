@@ -148,8 +148,9 @@ hl.config({
             color        = 0xee1a1a1a,
         },
 
-        -- xray: blur only the wallpaper (cached) instead of re-blurring windows behind
-        -- every frame; cheap on the iGPU since the wallpaper is static
+        -- xray on by default: blur the cached wallpaper instead of re-blurring the stack every
+        -- frame. Tiled windows never overlap, so there is nothing behind them to show anyway;
+        -- the floating rule below turns it off for the windows that can overlap.
         blur = {
             enabled           = true,
             size              = 10,
@@ -409,13 +410,34 @@ hl.window_rule({
     opaque = true,
 })
 
+-- Floating windows are the ones that can sit on top of another window, so they pay for a real
+-- re-blur; tiled windows keep the cached-wallpaper xray from the blur settings above
+hl.window_rule({
+    name  = "blur-behind-floating",
+    match = { float = true },
+
+    xray = false,
+})
+
 -- Bar, launcher and notification centre (fuzzel), notifications (mako), calendar popup, power menu and personalize panel match window transparency with the same blur
--- xray like windows: without it layers blur the (already darkened) windows behind them and look darker
 hl.layer_rule({
     name  = "blur-layers",
     match = { namespace = "^(waybar|launcher|notifications|calendar|powermenu|personalize)$" },
     blur  = true,
+})
+
+-- The bar spans the screen edge and is usually over the wallpaper: keep the cached blur
+hl.layer_rule({
+    name  = "xray-bar",
+    match = { namespace = "^waybar$" },
     xray  = true,
+})
+
+-- Popups always open over whatever is on screen, so they blur the real windows behind them
+hl.layer_rule({
+    name  = "blur-behind-popups",
+    match = { namespace = "^(launcher|notifications|calendar|powermenu|personalize)$" },
+    xray  = false,
 })
 
 -- Blur only the visible panels, not the transparent parts: the calendar popup, power menu and personalize panel
