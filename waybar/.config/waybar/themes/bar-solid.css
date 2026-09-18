@@ -1,0 +1,2 @@
+/* Solid bar: black in dark mode, white in light */
+@define-color bar_bg @bg;

@@ -1,6 +1,7 @@
 @import "colors.css";
 @import "accent.css";
 @import "icons.css";
+@import "bar.css";
 
 * {
     font-family: Inter;
@@ -13,8 +14,8 @@
 }
 
 window#waybar {
-    /* same as windows' active/inactive_opacity in hyprland.lua; text stays opaque */
-    background: alpha(@bg, 0.85);
+    /* bar.css (personalize): translucent like windows, or solid; text stays opaque */
+    background: @bar_bg;
     color: @fg;
 }
 

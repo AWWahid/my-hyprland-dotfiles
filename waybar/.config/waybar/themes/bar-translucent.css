@@ -1,0 +1,2 @@
+/* Bar matches windows: same 0.85 as the backgrounds apps draw */
+@define-color bar_bg alpha(@bg, 0.85);
