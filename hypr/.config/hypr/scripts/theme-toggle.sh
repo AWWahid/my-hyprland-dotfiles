@@ -25,7 +25,6 @@ fi
 
 ln -sfn themes/$mode.css  $cfg/waybar/colors.css
 ln -sfn themes/$mode      $cfg/mako/colors
-ln -sfn themes/$mode.conf $cfg/kitty/colors.conf
 
 # Accent: generated files (gitignored) so accent.conf stays the single source.
 # accent.conf, icons.css, bar.css and hover.css are personalize's state (gitignored); defaults on a fresh install
@@ -38,6 +37,10 @@ r=$((16#${accent:0:2})) g=$((16#${accent:2:2})) b=$((16#${accent:4:2}))
 (( r * 299 + g * 587 + b * 114 > 150000 )) && on_accent='#000000' || on_accent='#ffffff'
 
 echo "@define-color accent #$accent;" > $cfg/waybar/accent.css
+# Kitty: accent in palette slot 16 (the bash prompt's user@host), so open terminals follow it on reload.
+# rm first: this used to be a symlink into themes/, and writing through it would overwrite the theme.
+rm -f $cfg/kitty/colors.conf
+{ cat $cfg/kitty/themes/$mode.conf; echo "color16 #$accent"; } > $cfg/kitty/colors.conf
 
 # Yazi: accent on its interface (cwd, tabs, mode, borders, hovered file); file type colors stay on the terminal palette.
 # Read at startup, so an open yazi picks it up next launch
