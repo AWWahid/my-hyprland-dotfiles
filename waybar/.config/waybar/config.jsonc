@@ -50,8 +50,9 @@
     },
     "custom/activity": {
         "format": "\ueaa2",
-        "tooltip-format": "Activity Monitor",
-        "on-click": "pkill -x btop || kitty --class activity-monitor -c ~/.config/kitty/activity.conf -e btop"
+        "tooltip-format": "Activity Monitor\nClick: processes · Right-click: performance",
+        "on-click": "~/.config/hypr/scripts/activity-monitor.sh 1",
+        "on-click-right": "~/.config/hypr/scripts/activity-monitor.sh 2"
     },
     "custom/notepad": {
         "format": "\uf040",
