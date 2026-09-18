@@ -49,9 +49,9 @@
         "on-click": "~/.local/bin/zed"
     },
     "custom/activity": {
-        "format": "\uf190",
+        "format": "\ueaa2",
         "tooltip-format": "Activity Monitor",
-        "on-click": "kitty --class activity-monitor -c ~/.config/kitty/activity.conf -e btop"
+        "on-click": "pkill -x btop || kitty --class activity-monitor -c ~/.config/kitty/activity.conf -e btop"
     },
     "custom/notepad": {
         "format": "\uf040",

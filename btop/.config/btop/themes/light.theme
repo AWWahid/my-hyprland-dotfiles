@@ -52,7 +52,7 @@ theme[upload_start]="#f5a8a3"
 theme[upload_mid]="#e8554a"
 theme[upload_end]="#d70015"
 
-# Flat process rows (proc_gradient is off) so the table reads like a list, not a heatmap
+# Process rows: bright for busy, fading to dim for idle
 theme[process_start]="#1a1a1a"
-theme[process_mid]="#1a1a1a"
-theme[process_end]="#1a1a1a"
+theme[process_mid]="#5a5a5a"
+theme[process_end]="#9a9a9a"
