@@ -1,17 +1,3 @@
-/* Mono icons (white in dark mode, black in light): hover turns the icon accent */
 @define-color icon @fg;
-
-#custom-expand:hover,
-#custom-files:hover,
-#custom-terminal:hover,
-#custom-firefox:hover,
-#custom-zed:hover,
-#custom-notepad:hover,
-#custom-activity:hover,
-#network:hover,
-#bluetooth:hover,
-#custom-notifications:hover,
-#pulseaudio:hover,
-#clock:hover {
-    color: @accent;
-}
+/* hover colour: the opposite of the icon colour, so a colour-change hover is always visible */
+@define-color hover_icon @accent;

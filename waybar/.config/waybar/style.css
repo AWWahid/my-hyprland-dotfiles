@@ -2,6 +2,7 @@
 @import "accent.css";
 @import "icons.css";
 @import "bar.css";
+@import "hover.css";
 
 * {
     font-family: Inter;
@@ -56,7 +57,8 @@ window#waybar {
     background: alpha(@accent, 0.15);
 }
 
-/* icon color and hover style come from icons.css (themes/icons-*.css, picked in the personalize panel) */
+/* icon colour (icons.css) and hover style (hover.css) are themes/ variants picked in the personalize panel;
+   every hover-*.css lists the clickable modules, so a new clickable module goes in all four */
 
 #workspaces button {
     min-width: 39px;

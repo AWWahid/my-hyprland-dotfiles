@@ -1,0 +1,17 @@
+/* Hover: faint rounded highlight behind the item */
+#custom-expand:hover,
+#custom-files:hover,
+#custom-terminal:hover,
+#custom-firefox:hover,
+#custom-zed:hover,
+#custom-notepad:hover,
+#custom-activity:hover,
+#network:hover,
+#bluetooth:hover,
+#custom-notifications:hover,
+#pulseaudio:hover,
+#clock:hover,
+#custom-power:hover {
+    background: alpha(@fg, 0.12);
+    border-radius: 8px;
+}

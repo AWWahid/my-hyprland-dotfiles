@@ -1,0 +1,19 @@
+/* Hover: two thin, half-height vertical lines either side of the item */
+#custom-expand:hover,
+#custom-files:hover,
+#custom-terminal:hover,
+#custom-firefox:hover,
+#custom-zed:hover,
+#custom-notepad:hover,
+#custom-activity:hover,
+#network:hover,
+#bluetooth:hover,
+#custom-notifications:hover,
+#pulseaudio:hover,
+#clock:hover,
+#custom-power:hover {
+    background-image: linear-gradient(alpha(@fg, 0.5), alpha(@fg, 0.5)), linear-gradient(alpha(@fg, 0.5), alpha(@fg, 0.5));
+    background-size: 1px 50%;
+    background-position: left center, right center;
+    background-repeat: no-repeat;
+}

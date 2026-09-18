@@ -28,10 +28,11 @@ ln -sfn themes/$mode      $cfg/mako/colors
 ln -sfn themes/$mode.conf $cfg/kitty/colors.conf
 
 # Accent: generated files (gitignored) so accent.conf stays the single source.
-# accent.conf, icons.css and bar.css are personalize's state (gitignored); defaults on a fresh install
+# accent.conf, icons.css, bar.css and hover.css are personalize's state (gitignored); defaults on a fresh install
 [ -f $cfg/hypr/accent.conf ] || printf 'source=wallpaper\ndark=#33ccff\nlight=#0077b3\n' > $cfg/hypr/accent.conf
 [ -L $cfg/waybar/icons.css ] || ln -sfn themes/icons-mono.css $cfg/waybar/icons.css
 [ -L $cfg/waybar/bar.css ] || ln -sfn themes/bar-translucent.css $cfg/waybar/bar.css
+[ -L $cfg/waybar/hover.css ] || ln -sfn themes/hover-pill.css $cfg/waybar/hover.css
 accent=$(sed -n "s/^$mode=#\?//p" $cfg/hypr/accent.conf)
 r=$((16#${accent:0:2})) g=$((16#${accent:2:2})) b=$((16#${accent:4:2}))
 (( r * 299 + g * 587 + b * 114 > 150000 )) && on_accent='#000000' || on_accent='#ffffff'

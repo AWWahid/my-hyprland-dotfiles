@@ -1,0 +1,19 @@
+/* Hover: short thin line under the item, thinner than the active workspace underline */
+#custom-expand:hover,
+#custom-files:hover,
+#custom-terminal:hover,
+#custom-firefox:hover,
+#custom-zed:hover,
+#custom-notepad:hover,
+#custom-activity:hover,
+#network:hover,
+#bluetooth:hover,
+#custom-notifications:hover,
+#pulseaudio:hover,
+#clock:hover,
+#custom-power:hover {
+    background-image: linear-gradient(alpha(@fg, 0.7), alpha(@fg, 0.7));
+    background-size: 50% 2px;
+    background-position: center bottom;
+    background-repeat: no-repeat;
+}
