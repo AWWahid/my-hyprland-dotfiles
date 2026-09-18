@@ -1,0 +1,156 @@
+# GUI file manager keys (shared by GNOME Files, Dolphin, Thunar and Nemo) on top of yazi's defaults.
+# yazi's one-letter keys that move or delete files are switched off, so a stray key can't touch anything.
+
+[[mgr.prepend_keymap]]
+on = "d"
+run = "noop"
+[[mgr.prepend_keymap]]
+on = "D"
+run = "noop"
+[[mgr.prepend_keymap]]
+on = "x"
+run = "noop"
+[[mgr.prepend_keymap]]
+on = "p"
+run = "noop"
+[[mgr.prepend_keymap]]
+on = "P"
+run = "noop"
+[[mgr.prepend_keymap]]
+on = "r"
+run = "noop"
+# yazi's Ctrl+Z suspends it, which freezes a window that has no shell to resume it; there's no undo
+[[mgr.prepend_keymap]]
+on = "<C-z>"
+run = "noop"
+
+# Delete moves to Trash; inside Trash it deletes permanently. Both ask first
+[[mgr.prepend_keymap]]
+on = "<Delete>"
+run = "plugin explorer -- delete"
+desc = "Move to Trash (delete permanently inside Trash)"
+[[mgr.prepend_keymap]]
+on = "<S-Delete>"
+run = "plugin explorer -- delete"
+desc = "Same as Delete: there's no permanent delete outside Trash"
+
+[[mgr.prepend_keymap]]
+on = "<C-c>"
+run = "yank"
+desc = "Copy"
+[[mgr.prepend_keymap]]
+on = "<C-x>"
+run = "yank --cut"
+desc = "Cut"
+[[mgr.prepend_keymap]]
+on = "<C-v>"
+run = "paste"
+desc = "Paste (never overwrites: clashing names get a suffix)"
+[[mgr.prepend_keymap]]
+on = "<F2>"
+run = "rename --cursor=before_ext"
+desc = "Rename"
+[[mgr.prepend_keymap]]
+on = "<C-S-n>"
+run = "create --dir"
+desc = "New folder"
+[[mgr.prepend_keymap]]
+on = "<F10>"
+run = "create --dir"
+desc = "New folder"
+[[mgr.prepend_keymap]]
+on = "<C-h>"
+run = "hidden toggle"
+desc = "Show hidden files"
+[[mgr.prepend_keymap]]
+on = "<A-.>"
+run = "hidden toggle"
+desc = "Show hidden files"
+[[mgr.prepend_keymap]]
+on = "<C-f>"
+run = "search --via=fd"
+desc = "Search file names below this folder"
+[[mgr.prepend_keymap]]
+on = "<F5>"
+run = "refresh"
+desc = "Refresh"
+[[mgr.prepend_keymap]]
+on = "<A-Enter>"
+run = "spot"
+desc = "Properties"
+
+# Opening goes through explorer so Quick Access shortcuts open the real folder
+[[mgr.prepend_keymap]]
+on = "<Enter>"
+run = "plugin explorer -- open"
+desc = "Open"
+[[mgr.prepend_keymap]]
+on = "o"
+run = "plugin explorer -- open"
+desc = "Open"
+[[mgr.prepend_keymap]]
+on = "l"
+run = "plugin explorer -- open"
+desc = "Open"
+[[mgr.prepend_keymap]]
+on = "<Right>"
+run = "plugin explorer -- open"
+desc = "Open"
+
+[[mgr.prepend_keymap]]
+on = "<A-Up>"
+run = "leave"
+desc = "Up one folder"
+[[mgr.prepend_keymap]]
+on = "<Backspace>"
+run = "leave"
+desc = "Up one folder"
+[[mgr.prepend_keymap]]
+on = "<A-Left>"
+run = "back"
+desc = "Back"
+[[mgr.prepend_keymap]]
+on = "<A-Right>"
+run = "forward"
+desc = "Forward"
+[[mgr.prepend_keymap]]
+on = "<A-Home>"
+run = "plugin explorer -- home"
+desc = "Quick Access"
+[[mgr.prepend_keymap]]
+on = "<C-l>"
+run = "cd --interactive"
+desc = "Type a location"
+
+[[mgr.prepend_keymap]]
+on = "<C-t>"
+run = "tab_create --current"
+desc = "New tab"
+[[mgr.prepend_keymap]]
+on = "<C-w>"
+run = "close"
+desc = "Close tab (quits on the last one)"
+[[mgr.prepend_keymap]]
+on = "<C-PageDown>"
+run = "tab_switch 1 --relative"
+desc = "Next tab"
+[[mgr.prepend_keymap]]
+on = "<C-PageUp>"
+run = "tab_switch -1 --relative"
+desc = "Previous tab"
+[[mgr.prepend_keymap]]
+on = "<C-q>"
+run = "quit"
+desc = "Quit"
+
+# Right-click menu, from the keyboard
+[[mgr.prepend_keymap]]
+on = "<S-F10>"
+run = "plugin explorer -- menu"
+desc = "Actions menu"
+
+# Drives: mount, unmount and eject
+[[mgr.prepend_keymap]]
+on = "M"
+run = "plugin mount"
+desc = "Drives"

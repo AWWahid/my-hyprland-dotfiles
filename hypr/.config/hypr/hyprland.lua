@@ -29,7 +29,7 @@ hl.monitor({
 
 -- Set programs that you use
 local terminal    = "kitty"
-local fileManager = "kitty -c ~/.config/kitty/yazi.conf -e yazi"
+local fileManager = "kitty -c ~/.config/kitty/yazi.conf -e sh -c '~/.config/yazi/quick-access.sh; exec yazi ~/.local/state/yazi/quick-access'"
 local menu        = "fuzzel"
 
 
