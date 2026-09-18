@@ -22,6 +22,18 @@ if [ "$1" = scan ]; then
     bluetoothctl --timeout 15 scan on >/dev/null
 fi
 
+# Battery level straight from the device's GATT Battery Level characteristic (0x2a19).
+# Some mice expose it but BlueZ never fills in its own Battery Percentage for them.
+gatt_battery() {
+    local path char
+    path=/org/bluez/hci0/dev_${1//:/_}
+    for char in $(busctl tree --list org.bluez 2>/dev/null | grep "^$path/service[0-9a-f]*/char[0-9a-f]*$"); do
+        busctl get-property org.bluez "$char" org.bluez.GattCharacteristic1 UUID 2>/dev/null | grep -q '"00002a19-' || continue
+        timeout 3 busctl call org.bluez "$char" org.bluez.GattCharacteristic1 ReadValue 'a{sv}' 0 2>/dev/null | awk '{print $3}'
+        return
+    done
+}
+
 labels=("  Scan for devices" "  Turn Bluetooth off")
 actions=(scan off)
 macs=("" "")
@@ -36,7 +48,10 @@ while read -r _ mac name; do
         audio-*) name="$name  (audio)" ;;
     esac
     if grep -q 'Connected: yes' <<<"$info"; then
-        labels+=("  $name  (connected)"); actions+=(disconnect)
+        # "Battery Percentage: 0x55 (85)", present only once the device has reported it
+        battery=$(sed -n 's/^\s*Battery Percentage: .*(\([0-9]*\))/\1/p' <<<"$info")
+        [ -z "$battery" ] && grep -q 'UUID: Battery Service' <<<"$info" && battery=$(gatt_battery "$mac")
+        labels+=("  $name  (connected${battery:+, $battery%})"); actions+=(disconnect)
     elif grep -q 'Paired: yes' <<<"$info"; then
         labels+=("  $name"); actions+=(connect)
     else
