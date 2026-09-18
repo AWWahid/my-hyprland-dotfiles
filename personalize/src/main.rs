@@ -17,7 +17,25 @@ const PRESETS: [(&str, &str); 8] = [
 
 fn home() -> PathBuf { PathBuf::from(std::env::var("HOME").unwrap_or_default()) }
 fn cfg(p: &str) -> PathBuf { home().join(".config").join(p) }
-fn wallpaper_link() -> PathBuf { home().join(".local/share/wallpaper/current") }
+fn wallpaper_dir() -> PathBuf { home().join(".local/share/wallpaper") }
+/// What hyprpaper and hyprlock show: a screen-sized copy of the chosen wallpaper (or the original)
+fn wallpaper_link() -> PathBuf { wallpaper_dir().join("current") }
+/// The chosen wallpaper itself, so the panel can tell which picture is current
+fn source_link() -> PathBuf { wallpaper_dir().join("source") }
+/// Not in ~/.cache: hyprpaper needs the copy at login, so a cache cleaner must not remove it
+fn scaled_dir() -> PathBuf { wallpaper_dir().join("scaled") }
+
+fn mtime(p: &Path) -> Option<u64> {
+    Some(fs::metadata(p).ok()?.modified().ok()?.duration_since(std::time::UNIX_EPOCH).ok()?.as_secs())
+}
+
+/// Swaps a symlink in one rename, so readers never see it missing
+fn relink(link: &Path, target: &Path) {
+    let tmp = link.with_extension("new");
+    let _ = fs::create_dir_all(link.parent().unwrap());
+    let _ = fs::remove_file(&tmp);
+    if std::os::unix::fs::symlink(target, &tmp).is_ok() { let _ = fs::rename(&tmp, link); }
+}
 
 #[derive(Clone)]
 struct State {
@@ -46,7 +64,9 @@ impl State {
             hover: fs::read_link(cfg("waybar/hover.css")).ok()
                 .and_then(|t| t.file_stem()?.to_str()?.strip_prefix("hover-").map(String::from))
                 .unwrap_or("pill".into()),
-            wallpaper: fs::canonicalize(wallpaper_link()).ok(),
+            // Falls back to `current` for a wallpaper set before `source` existed
+            wallpaper: fs::canonicalize(source_link()).ok()
+                .or_else(|| fs::canonicalize(wallpaper_link()).ok().filter(|p| !p.starts_with(scaled_dir()))),
         }
     }
 
@@ -61,7 +81,7 @@ impl State {
     }
 }
 
-enum Op { Mode(bool), Wallpaper(PathBuf, Option<PathBuf>), FromWallpaper(Option<PathBuf>), Manual(String), Icons(bool), Bar(bool), Hover(&'static str) }
+enum Op { Mode(bool), Wallpaper(PathBuf, Option<PathBuf>), Refit(PathBuf), FromWallpaper(Option<PathBuf>), Manual(String), Icons(bool), Bar(bool), Hover(&'static str) }
 
 /// Sets both accents from the image, each from its own matugen run with that mode's fallback
 /// (white for dark, black for light); false (accents untouched) if matugen fails.
@@ -80,6 +100,59 @@ fn matugen(img: &Path, s: &mut State) -> bool {
     s.accent_dark = dark;
     s.accent_light = light;
     true
+}
+
+/// Size the wallpaper has to cover: the largest monitor in device pixels, turned for rotated ones
+fn screen_size() -> Option<(i32, i32)> {
+    let out = Command::new("hyprctl").args(["monitors", "-j"]).output().ok()?;
+    let mons: Vec<serde_json::Value> = serde_json::from_slice(&out.stdout).ok()?;
+    mons.iter().filter_map(|m| {
+        let (w, h) = (m["width"].as_i64()? as i32, m["height"].as_i64()? as i32);
+        Some(if m["transform"].as_i64().unwrap_or(0) % 2 == 1 { (h, w) } else { (w, h) })
+    }).reduce(|a, b| (a.0.max(b.0), a.1.max(b.1)))
+}
+
+/// The image to show for `src`: a copy scaled down to just cover the screen (hyprpaper crops it,
+/// as before), with its size; or `src` itself when it is no bigger than the screen or can't be measured.
+/// Everything past the screen size is memory the compositor holds for pixels it never shows.
+fn fit(src: &Path) -> (PathBuf, Option<(i32, i32)>) {
+    let copy = || {
+        let (sw, sh) = screen_size()?;
+        let (_, iw, ih) = gdk_pixbuf::Pixbuf::file_info(src)?;
+        let k = f64::max(sw as f64 / iw as f64, sh as f64 / ih as f64);
+        if k >= 1.0 { return None }
+        let (w, h) = ((iw as f64 * k).ceil() as i32, (ih as f64 * k).ceil() as i32);
+        let name = format!("{}-{}-{w}x{h}.png", src.file_name()?.to_string_lossy(), mtime(src)?);
+        Some((scaled_dir().join(name), (w, h)))
+    };
+    match copy() { Some((p, size)) => (p, Some(size)), None => (src.to_path_buf(), None) }
+}
+
+/// Shows `src` (as its screen-sized copy) now and after restarts, and deletes every other copy
+fn set_wallpaper(src: &Path) {
+    let (mut shown, size) = fit(src);
+    if let (Some((w, h)), false) = (size, shown.exists()) {
+        let _ = fs::create_dir_all(scaled_dir());
+        // Written aside and renamed in, so hyprpaper never loads half a file
+        let part = shown.with_extension("part");
+        let saved = gdk_pixbuf::Pixbuf::from_file_at_scale(src, w, h, false)
+            .and_then(|p| p.savev(&part, "png", &[])).is_ok();
+        if !(saved && fs::rename(&part, &shown).is_ok()) {
+            let _ = fs::remove_file(&part);
+            shown = src.to_path_buf();
+        }
+    }
+    // Links change only once the copy exists: being killed mid-scale leaves the old wallpaper intact
+    relink(&source_link(), src);
+    relink(&wallpaper_link(), &shown);
+    // Apply live; if hyprpaper isn't reachable, restart it (it reads the symlink on start)
+    let _ = Command::new("sh").args(["-c",
+        r#"hyprctl hyprpaper wallpaper ",$1" >/dev/null 2>&1 || { pkill -x hyprpaper; setsid -f hyprpaper >/dev/null 2>&1; }"#,
+        "sh"]).arg(&shown).status();
+    // Only the shown copy is needed; hyprpaper already holds it, and a later pick rescales from the original
+    for stale in fs::read_dir(scaled_dir()).into_iter().flatten().flatten().map(|e| e.path()) {
+        if stale != shown { let _ = fs::remove_file(stale); }
+    }
 }
 
 /// Points a waybar css file at a themes/ variant, like colors.css, and reloads waybar's style
@@ -110,17 +183,9 @@ fn run(op: Op, mut s: State) {
             s.save_accent();
             theme("apply");
         }
+        Op::Refit(path) => set_wallpaper(&path),
         Op::Wallpaper(path, thumb) => {
-            // hyprpaper.conf and hyprlock read this symlink, so the choice survives restarts
-            let link = wallpaper_link();
-            let tmp = link.with_extension("new");
-            let _ = fs::create_dir_all(link.parent().unwrap());
-            let _ = fs::remove_file(&tmp);
-            if std::os::unix::fs::symlink(&path, &tmp).is_ok() { let _ = fs::rename(&tmp, &link); }
-            // Apply live; if hyprpaper isn't reachable, restart it (it reads the symlink on start)
-            let _ = Command::new("sh").args(["-c",
-                r#"hyprctl hyprpaper wallpaper ",$1" >/dev/null 2>&1 || { pkill -x hyprpaper; setsid -f hyprpaper >/dev/null 2>&1; }"#,
-                "sh"]).arg(&path).status();
+            set_wallpaper(&path);
             if s.from_wallpaper && matugen(thumb.as_deref().unwrap_or(&path), &mut s) {
                 s.save_accent();
                 theme("apply");
@@ -144,8 +209,7 @@ fn wallpapers() -> Vec<(PathBuf, PathBuf)> {
         .collect();
     files.sort();
     let walls: Vec<(PathBuf, PathBuf)> = files.into_iter().filter_map(|p| {
-        let mtime = fs::metadata(&p).ok()?.modified().ok()?.duration_since(std::time::UNIX_EPOCH).ok()?.as_secs();
-        let thumb = cache.join(format!("{}-{mtime}.png", p.file_name()?.to_string_lossy()));
+        let thumb = cache.join(format!("{}-{}.png", p.file_name()?.to_string_lossy(), mtime(&p)?));
         if !thumb.exists() {
             gdk_pixbuf::Pixbuf::from_file_at_scale(&p, 240, 240, true).ok()?.savev(&thumb, "png", &[]).ok()?;
         }
@@ -546,6 +610,11 @@ fn main() {
         quit_pending: Cell::new(false),
     });
     refresh(&ctx);
+    // Rescales the current wallpaper when its copy no longer matches: set before copies existed,
+    // edited since, or scaled for a monitor that has been swapped. A missing original keeps the old copy.
+    if let Some(src) = State::load().wallpaper.filter(|p| p.exists()) {
+        if fs::canonicalize(wallpaper_link()).ok() != Some(fit(&src).0) { dispatch(&ctx, Op::Refit(src)) }
+    }
 
     let outside = gtk::GestureClick::new();
     outside.set_propagation_phase(gtk::PropagationPhase::Capture);
