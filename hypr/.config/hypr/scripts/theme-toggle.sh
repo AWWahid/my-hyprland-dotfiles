@@ -61,7 +61,6 @@ fi
     cat <<EOF
 [filetype]
 rules = [
-    { url = "**/yazi/quick-access/*", fg = "$folder" },
     { url = "*", is = "orphan", bg = "red" },
     { url = "*", is = "dummy", bg = "red" },
     { url = "*/", is = "dummy", bg = "red" },
@@ -72,20 +71,8 @@ rules = [
     { mime = "**/application/{zip,rar,7z*,tar,gzip,xz,zstd,bzip*,lzma,compress,archive,cpio,arj,xar,ms-cab*}", fg = "$archive" },
     { url = "*", is = "exec", fg = "$exec" },
 ]
-[icon]
-# Quick Access names carry their own glyph (pinned, frequent, drive...)
-prepend_globs = [ { url = "**/yazi/quick-access/*", text = "" } ]
-prepend_conds = [
-    { if = "dir & hovered", text = "$(printf '\ue5fe')", fg = "$folder" },
-    { if = "dir", text = "$(printf '\ue5ff')", fg = "$folder" },
-]
-prepend_dirs = [
 EOF
-    for d in Desktop:f108 Development:e70c Documents:f401 Downloads:f498 Library:eb9c Movies:f447 \
-             Music:f025 Pictures:e244 Public:f42b Videos:f447; do
-        echo "    { name = \"${d%:*}\", text = \"$(printf "\\u${d#*:}")\", fg = \"$folder\" },"
-    done
-    echo "]"
+    cat $cfg/yazi/icons.toml
 } > $cfg/yazi/theme.toml
 
 rm -f $cfg/fuzzel/colors.ini   # was a symlink into themes/; don't write through it

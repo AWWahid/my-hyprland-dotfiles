@@ -1,0 +1,3 @@
+# A file manager shows names, not "name -> target"
+[mgr]
+show_symlink = false

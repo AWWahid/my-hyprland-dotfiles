@@ -24,15 +24,12 @@ run = "noop"
 on = "<C-z>"
 run = "noop"
 
-# Delete moves to Trash; inside Trash it deletes permanently. Both ask first
+# Delete moves to Trash; inside Trash it deletes permanently. Both ask first.
+# No Shift+Delete: outside Trash nothing deletes permanently
 [[mgr.prepend_keymap]]
 on = "<Delete>"
 run = "plugin explorer -- delete"
 desc = "Move to Trash (delete permanently inside Trash)"
-[[mgr.prepend_keymap]]
-on = "<S-Delete>"
-run = "plugin explorer -- delete"
-desc = "Same as Delete: there's no permanent delete outside Trash"
 
 [[mgr.prepend_keymap]]
 on = "<C-c>"

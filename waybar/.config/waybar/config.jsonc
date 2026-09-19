@@ -31,7 +31,7 @@
     "custom/files": {
         "format": "\ue2c7",
         "tooltip-format": "Files",
-        "on-click": "kitty -c ~/.config/kitty/yazi.conf -e sh -c '~/.config/yazi/quick-access.sh; exec yazi ~/.local/state/yazi/quick-access'"
+        "on-click": "kitty -c ~/.config/kitty/yazi.conf -e yazi ~/.local/state/yazi/quick-access"
     },
     "custom/terminal": {
         "format": "\ueb8e",
