@@ -67,6 +67,11 @@ desc = "Show hidden files"
 on = "<C-f>"
 run = "search --via=fd"
 desc = "Search file names below this folder"
+# Filter bar like Dolphin's: hides what doesn't match while typing; Esc clears it
+[[mgr.prepend_keymap]]
+on = "<C-i>"
+run = "filter --smart"
+desc = "Filter this folder"
 [[mgr.prepend_keymap]]
 on = "<F5>"
 run = "refresh"

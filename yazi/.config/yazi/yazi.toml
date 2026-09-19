@@ -1,7 +1,22 @@
 # A file manager shows names, not "name -> target"
 [mgr]
 show_symlink = false
+# No "drag": pressing on one item and releasing on another selects a range (init.lua), not drag-and-drop
+mouse_events = ["click", "scroll"]
 
 # Quick Access's Trash entry previews the Trash, not the empty placeholder it points at
 [plugin]
 prepend_previewers = [{ url = "**/quick-access/\U000F0A79 Trash/", run = "explorer" }]
+
+# Text opens in Zed, never in vi (yazi's default is ${EDITOR:-vi} inside the terminal).
+# Bulk rename/create (F2 with several selected) edits a list and applies it when the editor closes,
+# so those files get the waiting variant
+[opener]
+edit = [{ run = "zed %s", desc = "Zed", orphan = true }]
+edit-wait = [{ run = "zed --wait %s", desc = "Zed", block = true }]
+
+[open]
+prepend_rules = [
+	{ url = "*/bulk-{rename,create}.txt", use = "edit-wait" },
+	{ url = "**/bulk-{rename,create}.txt", use = "edit-wait" },
+]

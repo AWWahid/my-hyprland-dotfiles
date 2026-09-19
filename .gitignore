@@ -12,6 +12,8 @@
 # Hardware/Device specific local overrides
 *.local
 !icons/.local
+!kitty/.local
+!bash/.local
 
 # OS garbage
 .DS_Store
@@ -22,3 +24,16 @@ thumbs.db
 CLAUDE.md
 AGENTS.md
 !zed/.config/zed/settings.json
+
+# Installed at their latest version, never pinned (install commands in CLAUDE.md):
+# uosc (its installer writes scripts, fonts and a default uosc.conf through the stow link)
+mpv/.config/mpv/scripts/
+mpv/.config/mpv/fonts/
+mpv/.config/mpv/script-opts/uosc.conf
+mpv/.config/mpv/.uosc-backup/
+# yazi plugins from `ya pkg add` (package.toml records the revision it installed)
+yazi/.config/yazi/package.toml
+yazi/.config/yazi/plugins/yamb.yazi/
+yazi/.config/yazi/plugins/mount.yazi/
+# Rust apps resolve the newest compatible crates on each `cargo install`
+Cargo.lock

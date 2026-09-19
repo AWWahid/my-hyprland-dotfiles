@@ -1,7 +1,7 @@
 --- @since 26.8.15
 -- File-explorer behaviour on top of yazi: the Quick Access start folder (built by
 -- quick-access.sh), a Trash-aware Delete, the right-click menu and a Finder-style status bar.
--- Entry: `plugin explorer -- open|delete|menu|home`.
+-- Entry: `plugin explorer -- open|openwith|delete|up|menu|home`; also previews the Trash entry.
 
 local M = {}
 
@@ -23,10 +23,11 @@ local where = ya.sync(function()
 		urls[1] = tostring(h.url)
 	end
 	return {
+		cwd = cwd,
 		qa = cwd == QA,
 		trash = cwd:find("^trash://") ~= nil,
 		trash_root = cwd:find("^trash:///@/*$") ~= nil,
-		hovered = h and { dir = h.cha.is_dir, link = h.link_to and tostring(h.link_to) },
+		hovered = h and { dir = h.cha.is_dir, link = h.link_to and tostring(h.link_to), url = tostring(h.url) },
 		urls = urls,
 	}
 end)
@@ -82,6 +83,110 @@ function M.up(w)
 	ya.emit("leave", {})
 end
 
+-- Open with…, like Nautilus: the apps installed for the hovered file's type (from their .desktop files,
+-- through gio), plus making one of them the default. Opens the selection, or the hovered file
+local function app_name(id)
+	local dirs = (os.getenv("XDG_DATA_HOME") or HOME .. "/.local/share") .. ":" .. (os.getenv("XDG_DATA_DIRS") or "/usr/local/share:/usr/share")
+	for dir in dirs:gmatch("[^:]+") do
+		local f = io.open(dir .. "/applications/" .. id)
+		if f then
+			local body = f:read("a")
+			f:close()
+			return body:match("\nName=([^\n]+)") or id, dir .. "/applications/" .. id
+		end
+	end
+end
+
+function M.openwith(w)
+	if not w.hovered then
+		return
+	end
+	local info = Command("gio"):arg({ "info", "-a", "standard::content-type", "--", w.hovered.url }):stdout(Command.PIPED):output()
+	local mime = info and info.stdout:match("standard::content%-type: (%S+)")
+	local out = mime and Command("gio"):arg({ "mime", mime }):stdout(Command.PIPED):output()
+	if not out then
+		return notify("Can't tell what kind of file this is")
+	end
+	local default = out.stdout:match(": (%S+%.desktop)\n")
+	local apps, seen = {}, {}
+	for id in (out.stdout:match("Registered applications:\n(.-)\n%S") or out.stdout:match("Registered applications:\n(.*)") or ""):gmatch("%s+(%S+%.desktop)") do
+		local name, path = app_name(id)
+		if name and not seen[id] then
+			seen[id] = true
+			apps[#apps + 1] = { id = id, name = name .. (id == default and " (default)" or ""), path = path }
+		end
+	end
+	if #apps == 0 then
+		return notify("No installed app opens " .. mime)
+	end
+
+	local keys = "123456789abcdefghijklmnopqrtuvwxyz"
+	local function pick(extra)
+		local cands = {}
+		for i, app in ipairs(apps) do
+			cands[i] = { on = keys:sub(i, i), desc = app.name }
+		end
+		if extra then
+			cands[#cands + 1] = { on = "s", desc = extra }
+		end
+		return ya.which { cands = cands }
+	end
+	local i = pick("Set as default…")
+	if i == #apps + 1 then
+		local j = pick()
+		if j then
+			-- From ~/.config: gio resolves the stow link to mimeapps.list relative to its working directory
+			local cfg = os.getenv("XDG_CONFIG_HOME") or HOME .. "/.config"
+			local set = Command("gio"):arg({ "mime", mime, apps[j].id }):cwd(cfg):stderr(Command.PIPED):output()
+			if set and set.status.success then
+				notify(apps[j].name:gsub(" %(default%)", "") .. " now opens " .. mime, "info")
+			else
+				notify("Couldn't set the default: " .. tostring(set and set.stderr), "error")
+			end
+		end
+	elseif i then
+		local args = { "launch", apps[i].path }
+		for _, u in ipairs(w.urls) do
+			args[#args + 1] = u
+		end
+		-- Waited for: gio returns once the app has started, and yazi kills children it drops
+		Command("gio"):arg(args):stdout(Command.NULL):stderr(Command.NULL):status()
+	end
+end
+
+-- Archives: yazi's built-in extract plugin (7-Zip) does the work. It extracts into a hidden temporary
+-- folder and renames it only on success, never overwrites (taken names get a suffix), doesn't nest a
+-- lone top-level item, asks for passwords and shows progress in the task list.
+-- Opening an archive already extracts it next to itself (yazi's default open rule)
+local ARCHIVE = { ".zip", ".7z", ".rar", ".tar", ".tgz", ".tbz2", ".txz", ".tar.gz", ".tar.bz2", ".tar.xz",
+	".tar.zst", ".iso", ".cab", ".cpio", ".cbz", ".cbr" }
+
+function M.archive(path)
+	local lower = path:lower()
+	for _, ext in ipairs(ARCHIVE) do
+		if lower:sub(-#ext) == ext then
+			return true
+		end
+	end
+end
+
+function M.extract_to(w)
+	local dest, event = ya.input { title = "Extract to folder:", value = w.cwd, pos = { "top-center", y = 3, w = 60 } }
+	if event ~= 1 or dest == "" then
+		return
+	end
+	dest = dest:gsub("^~", HOME):gsub("/+$", "")
+	local cha = fs.cha(Url(dest))
+	if not (cha and cha.is_dir) then
+		return notify(dest .. " isn't a folder")
+	elseif not Command("test"):arg({ "-w", dest }):status().success then
+		return notify("No permission to write to " .. dest) -- the extract plugin would fail without a word
+	end
+	for _, u in ipairs(w.urls) do
+		ya.emit("plugin", { "extract", ya.quote(u) .. " " .. ya.quote(dest) })
+	end
+end
+
 function M.home()
 	ya.emit("cd", { Url(QA) }) -- the cd hook rebuilds it
 end
@@ -113,7 +218,7 @@ function M.menu(w)
 	else
 		items = {
 			{ on = "o", desc = "Open", run = function() M.open(w) end },
-			{ on = "w", desc = "Open with…", run = function() ya.emit("open", { interactive = true }) end },
+			{ on = "w", desc = "Open with…", run = function() M.openwith(w) end },
 			{ on = "r", desc = "Rename", run = function() ya.emit("rename", { cursor = "before_ext" }) end },
 			{ on = "c", desc = "Copy", run = function() ya.emit("yank", {}) end },
 			{ on = "x", desc = "Cut", run = function() ya.emit("yank", { cut = true }) end },
@@ -124,11 +229,19 @@ function M.menu(w)
 			{ on = "s", desc = "Select / Unselect", run = function() ya.emit("toggle", {}) end },
 			{ on = "a", desc = "Select all", run = function() ya.emit("toggle_all", { state = "on" }) end },
 			{ on = "f", desc = "Search…", run = function() ya.emit("search", { via = "fd" }) end },
+			{ on = "l", desc = "Filter this folder…", run = function() ya.emit("filter", { smart = true }) end },
 		}
+		if w.hovered and not w.hovered.dir and M.archive(w.hovered.url) then
+			table.insert(items, 3, { on = "e", desc = "Extract here", run = function() ya.emit("open", {}) end })
+			table.insert(items, 4, { on = "t", desc = "Extract to…", run = function() M.extract_to(w) end })
+		end
 		if w.hovered and w.hovered.dir then
-			table.insert(items, 8, { on = "p", desc = "Pin to Quick Access", run = function() ya.emit("plugin", { "yamb", "save" }) end })
+			table.insert(items, #items - 5, { on = "p", desc = "Pin to Quick Access", run = function() ya.emit("plugin", { "yamb", "save" }) end })
 		end
 	end
+
+	-- yazi's help lists every key (ours carry a description), searchable by typing
+	items[#items + 1] = { on = "?", desc = "Keyboard shortcuts…", run = function() ya.emit("help", {}) end }
 
 	local cands = {}
 	for i, item in ipairs(items) do
@@ -227,12 +340,28 @@ function M:setup()
 	end)
 end
 
--- Preview of the Quick Access Trash entry: what's in Trash, not the empty placeholder it points at
+-- Preview of the Quick Access Trash entry: what's in Trash, not the empty placeholder it points at.
+-- Like trash://, that's the home Trash plus each local drive's own (.Trash-UID or .Trash/UID)
+local REMOTE = { autofs = 1, nfs = 1, nfs4 = 1, cifs = 1, smb3 = 1, ["fuse.sshfs"] = 1, ["fuse.rclone"] = 1, davfs = 1 }
 function M:peek(job)
-	local files = fs.read_dir(Url(HOME_TRASH .. "/files"), { limit = job.area.h }) or {}
+	local status = io.open("/proc/self/status")
+	local uid = status and status:read("a"):match("\nUid:%s+(%d+)")
+	local dirs, seen = { HOME_TRASH .. "/files" }, {}
+	for line in io.lines("/proc/self/mounts") do
+		local target, fstype = line:match("^%S+ (%S+) (%S+)")
+		target = target:gsub("\\(%d%d%d)", function(o) return string.char(tonumber(o, 8)) end)
+		if uid and not REMOTE[fstype] and not seen[target] then
+			seen[target] = true
+			local root = target == "/" and "" or target
+			dirs[#dirs + 1] = root .. "/.Trash-" .. uid .. "/files"
+			dirs[#dirs + 1] = root .. "/.Trash/" .. uid .. "/files"
+		end
+	end
 	local lines = {}
-	for i, f in ipairs(files) do
-		lines[i] = ui.Line(f.name)
+	for _, dir in ipairs(dirs) do
+		for _, f in ipairs(fs.read_dir(Url(dir), { limit = job.area.h }) or {}) do
+			lines[#lines + 1] = ui.Line(f.name)
+		end
 	end
 	if #lines == 0 then
 		lines[1] = ui.Line("Trash is empty")

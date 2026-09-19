@@ -1,0 +1,5 @@
+#!/bin/sh
+# $EDITOR: Zed in a graphical session (waits for the tab to close, as git and sudoedit expect),
+# nano on a bare TTY, where Zed can't open. Never vi
+[ -n "$WAYLAND_DISPLAY" ] && command -v zed >/dev/null && exec zed --wait "$@"
+exec nano "$@"
