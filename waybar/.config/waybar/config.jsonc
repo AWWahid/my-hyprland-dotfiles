@@ -158,6 +158,7 @@
         "modules": [
             "custom/expand",
             "bluetooth",
+            "custom/nightshift",
             "tray"
         ],
         "drawer": {
@@ -166,6 +167,15 @@
             "transition-duration": 200,
             "children-class": "drawer-child"
         }
+    },
+    "custom/nightshift": {
+        "exec": "~/.config/hypr/scripts/nightshift.sh",
+        "return-type": "json",
+        "interval": "once",
+        "signal": 9,
+        "on-click": "~/.config/hypr/scripts/nightshift.sh toggle",
+        "on-scroll-up": "~/.config/hypr/scripts/nightshift.sh warmer",
+        "on-scroll-down": "~/.config/hypr/scripts/nightshift.sh cooler"
     },
     "custom/expand": {
         "format": "\ue5cb",

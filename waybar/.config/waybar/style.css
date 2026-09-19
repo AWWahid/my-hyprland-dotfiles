@@ -46,6 +46,7 @@ window#waybar {
 #custom-activity,
 #network,
 #bluetooth,
+#custom-nightshift,
 #custom-notifications {
     font-family: "Material Symbols Filled";
     font-size: 27px;
@@ -69,6 +70,7 @@ window#waybar {
 #pulseaudio,
 #network,
 #bluetooth,
+#custom-nightshift,
 #battery,
 #custom-expand,
 #custom-power,
@@ -99,7 +101,8 @@ window#waybar {
 #pulseaudio.muted,
 #network.disconnected,
 #network.disabled,
-#bluetooth.off {
+#bluetooth.off,
+#custom-nightshift.off {
     color: @muted;
 }
 
