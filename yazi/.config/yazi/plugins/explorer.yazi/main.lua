@@ -25,6 +25,7 @@ local where = ya.sync(function()
 	return {
 		qa = cwd == QA,
 		trash = cwd:find("^trash://") ~= nil,
+		trash_root = cwd:find("^trash:///@/*$") ~= nil,
 		hovered = h and { dir = h.cha.is_dir, link = h.link_to and tostring(h.link_to) },
 		urls = urls,
 	}
@@ -73,6 +74,14 @@ function M.delete(w)
 	ya.emit("remove", { permanently = w.trash })
 end
 
+-- trash:// has no parent, so going up from it would do nothing; its place is under Quick Access
+function M.up(w)
+	if w.trash_root then
+		return ya.emit("cd", { Url(QA) })
+	end
+	ya.emit("leave", {})
+end
+
 function M.home()
 	ya.emit("cd", { Url(QA) }) -- the cd hook rebuilds it
 end
@@ -92,6 +101,8 @@ function M.menu(w)
 				end
 			end },
 			{ on = "d", desc = "Delete permanently", run = function() M.delete(w) end },
+			{ on = "s", desc = "Select / Unselect", run = function() ya.emit("toggle", {}) end },
+			{ on = "a", desc = "Select all", run = function() ya.emit("toggle_all", { state = "on" }) end },
 			-- Empties everything; the list is only there because the message can't be empty
 			{ on = "e", desc = "Empty Trash", run = function()
 				if #w.urls > 0 then
@@ -110,6 +121,9 @@ function M.menu(w)
 			{ on = "n", desc = "New folder", run = function() ya.emit("create", { dir = true }) end },
 			{ on = "d", desc = "Move to Trash", run = function() M.delete(w) end },
 			{ on = "i", desc = "Properties", run = function() ya.emit("spot", {}) end },
+			{ on = "s", desc = "Select / Unselect", run = function() ya.emit("toggle", {}) end },
+			{ on = "a", desc = "Select all", run = function() ya.emit("toggle_all", { state = "on" }) end },
+			{ on = "f", desc = "Search…", run = function() ya.emit("search", { via = "fd" }) end },
 		}
 		if w.hovered and w.hovered.dir then
 			table.insert(items, 8, { on = "p", desc = "Pin to Quick Access", run = function() ya.emit("plugin", { "yamb", "save" }) end })
@@ -213,9 +227,24 @@ function M:setup()
 	end)
 end
 
+-- Preview of the Quick Access Trash entry: what's in Trash, not the empty placeholder it points at
+function M:peek(job)
+	local files = fs.read_dir(Url(HOME_TRASH .. "/files"), { limit = job.area.h }) or {}
+	local lines = {}
+	for i, f in ipairs(files) do
+		lines[i] = ui.Line(f.name)
+	end
+	if #lines == 0 then
+		lines[1] = ui.Line("Trash is empty")
+	end
+	ya.preview_widget(job, ui.Text(lines):area(job.area))
+end
+
+function M:seek() end
+
 function M:entry(job)
 	local action, w = job.args[1], where()
-	if M[action] and action ~= "setup" and action ~= "entry" then
+	if M[action] and action ~= "setup" and action ~= "entry" and action ~= "peek" and action ~= "seek" then
 		M[action](w)
 	end
 end

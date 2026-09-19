@@ -94,13 +94,22 @@ on = "<Right>"
 run = "plugin explorer -- open"
 desc = "Open"
 
+# Up goes through explorer so it also works from Trash
 [[mgr.prepend_keymap]]
 on = "<A-Up>"
-run = "leave"
+run = "plugin explorer -- up"
 desc = "Up one folder"
 [[mgr.prepend_keymap]]
 on = "<Backspace>"
-run = "leave"
+run = "plugin explorer -- up"
+desc = "Up one folder"
+[[mgr.prepend_keymap]]
+on = "<Left>"
+run = "plugin explorer -- up"
+desc = "Up one folder"
+[[mgr.prepend_keymap]]
+on = "h"
+run = "plugin explorer -- up"
 desc = "Up one folder"
 [[mgr.prepend_keymap]]
 on = "<A-Left>"

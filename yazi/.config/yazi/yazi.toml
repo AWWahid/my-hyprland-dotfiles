@@ -1,3 +1,7 @@
 # A file manager shows names, not "name -> target"
 [mgr]
 show_symlink = false
+
+# Quick Access's Trash entry previews the Trash, not the empty placeholder it points at
+[plugin]
+prepend_previewers = [{ url = "**/quick-access/\U000F0A79 Trash/", run = "explorer" }]
