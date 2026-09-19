@@ -403,13 +403,6 @@ hl.window_rule({
     opaque = true,
 })
 
-hl.window_rule({
-    name  = "opaque-browser",
-    match = { class = "^(firefox|org\\.mozilla\\.firefox)$" },
-
-    opaque = true,
-})
-
 -- Floating windows are the ones that can sit on top of another window, so they pay for a real
 -- re-blur; tiled windows keep the cached-wallpaper xray from the blur settings above
 hl.window_rule({

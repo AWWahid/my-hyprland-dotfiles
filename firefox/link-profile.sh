@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Links user.js and chrome/userChrome.css into the Firefox profile in use. Not a stow package: the
+# Links user.js, chrome/userChrome.css and chrome/colors.css (made by theme-toggle.sh) into the Firefox profile in use. Not a stow package: the
 # profile folder has a random name and sits in a different place for native Firefox and the Flatpak.
 # Run once per machine after Firefox has started once (that creates the profile); rerun after
 # creating a new profile. Existing files of the same name are moved aside to *.bak, never deleted
@@ -19,7 +19,7 @@ for ini in ~/.mozilla/firefox/profiles.ini \
     [ -d "$dir" ] || continue
     [ -L "$dir/chrome" ] && rm -- "$dir/chrome" # a folder link left by the old stow package
     mkdir -p "$dir/chrome"
-    for f in user.js chrome/userChrome.css; do
+    for f in user.js chrome/userChrome.css chrome/colors.css; do
         [ -e "$dir/$f" ] && [ ! -L "$dir/$f" ] && mv -- "$dir/$f" "$dir/$f.bak"
         ln -sfn -- "$repo/$f" "$dir/$f"
     done

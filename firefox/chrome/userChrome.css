@@ -1,3 +1,63 @@
+/* Accent for both modes, written by theme-toggle.sh (gitignored) */
+@import url("colors.css");
+
 #navigator-toolbox, #navigator-toolbox *, menupopup, panel {
   font-size: 13px !important;
 }
+
+/* System look without a Firefox theme: pure white/black at 0.85 behind the tab strip and toolbars
+   (Hyprland blurs behind it), solid text, accent on the active tab and focus; pages stay opaque.
+   Firefox paints the chrome from these variables (body carries the toolbox background), so they are
+   set rather than individual elements; only the body is tinted, so the 0.85 layers don't stack */
+:root {
+  --sys-bg: rgba(255, 255, 255, 0.85);
+  --sys-solid: #ffffff;
+  --sys-fg: #000000;
+  --sys-field: rgba(0, 0, 0, 0.06);
+  --sys-hover: rgba(0, 0, 0, 0.08);
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --sys-bg: rgba(0, 0, 0, 0.85);
+    --sys-solid: #000000;
+    --sys-fg: #ffffff;
+    --sys-field: rgba(255, 255, 255, 0.08);
+    --sys-hover: rgba(255, 255, 255, 0.1);
+  }
+}
+
+:root {
+  --toolbox-background-color: var(--sys-bg) !important;
+  --toolbox-background-color-inactive: var(--sys-bg) !important;
+  --toolbox-text-color: var(--sys-fg) !important;
+  --toolbox-text-color-inactive: var(--sys-fg) !important;
+  --toolbar-background-color: transparent !important;
+  --toolbar-text-color: var(--sys-fg) !important;
+
+  --tab-background-color-selected: color-mix(in srgb, var(--sys-accent) 15%, transparent) !important;
+  --tab-background-color-hover: var(--sys-hover) !important;
+  --toolbarbutton-background-color-hover: var(--sys-hover) !important;
+  --toolbarbutton-background-color-active: color-mix(in srgb, var(--sys-accent) 15%, transparent) !important;
+
+  --urlbar-background-color: var(--sys-field) !important;
+  --urlbar-background-color-focus: var(--sys-field) !important;
+
+  --focus-outline-color: var(--sys-accent) !important;
+  --color-accent-primary: var(--sys-accent) !important;
+  --toolbarbutton-icon-fill-attention: var(--sys-accent) !important;
+  --button-primary-bgcolor: var(--sys-accent) !important;
+  --button-primary-color: var(--sys-on-accent) !important;
+
+  background: transparent !important;
+}
+#tabbrowser-tabpanels, browser { background-color: Canvas !important; }
+
+/* Address and search boxes: accent outline when focused, accent text selection */
+#urlbar[focused] > .urlbar-background, #urlbar[focused] > #urlbar-background, #searchbar:focus-within {
+  outline: 2px solid var(--sys-accent) !important;
+  outline-offset: -1px !important;
+  box-shadow: none !important;
+}
+/* The suggestions list opens over the page, where there is no blur behind it: fully opaque there */
+#urlbar[open] > .urlbar-background, #urlbar[open] > #urlbar-background { background: var(--sys-solid) !important; }
+#urlbar ::selection, #searchbar ::selection { background: var(--sys-accent) !important; color: var(--sys-on-accent) !important; }

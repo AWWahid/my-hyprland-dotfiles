@@ -1,9 +1,14 @@
-/* Pure black overrides on top of Adwaita-dark */
+/* Black overrides on top of Adwaita-dark: 0.85 backgrounds like the rest of the system, text stays solid */
 @define-color theme_bg_color #000000;
 @define-color theme_base_color #000000;
-window, .background, headerbar, .titlebar, textview text, treeview.view,
-notebook, notebook > header, scrolledwindow, list, row, iconview, .sidebar, placessidebar {
-    background-color: #000000;
+/* Only the window is tinted: nested 0.85 layers would stack back to nearly opaque */
+window.background, menu, .csd.popup decoration, tooltip {
+    background-color: rgba(0, 0, 0, 0.85);
+    background-image: none;
+}
+headerbar, .titlebar, textview, textview text, treeview.view,
+notebook, notebook > header, notebook > stack, scrolledwindow, list, row, iconview, .sidebar, placessidebar {
+    background-color: transparent;
     background-image: none;
 }
 

@@ -1,3 +1,15 @@
+/* White overrides on top of Adwaita: 0.85 backgrounds like the rest of the system, text stays solid */
+/* Only the window is tinted: nested 0.85 layers would stack back to nearly opaque */
+window.background, menu, .csd.popup decoration, tooltip {
+    background-color: rgba(255, 255, 255, 0.85);
+    background-image: none;
+}
+headerbar, .titlebar, textview, textview text, treeview.view,
+notebook, notebook > header, notebook > stack, scrolledwindow, list, row, iconview, .sidebar, placessidebar {
+    background-color: transparent;
+    background-image: none;
+}
+
 
 headerbar image, toolbar image, .sidebar image, placessidebar image { -gtk-icon-transform: scale(1.25); }
 check, radio { min-width: 16px; min-height: 16px; }

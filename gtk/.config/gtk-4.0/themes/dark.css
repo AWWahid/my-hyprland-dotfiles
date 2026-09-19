@@ -1,14 +1,17 @@
-/* Pure black libadwaita surfaces; popovers/cards slightly lifted so they stay visible */
+/* Normal app windows are tinted 0.85 like the rest of the system (text stays solid); surfaces inside them
+   are transparent, since nested 0.85 layers stack back to nearly opaque. Popovers and tooltips are their own
+   surfaces. Scoped to window.csd so the layer-shell panels (calendar, powermenu, personalize) keep their own CSS;
+   window_bg_color stays solid because the calendar derives its 0.85 from it. */
 @define-color window_bg_color #000000;
-@define-color view_bg_color #000000;
-@define-color headerbar_bg_color #000000;
-@define-color headerbar_backdrop_color #000000;
-@define-color sidebar_bg_color #000000;
-@define-color sidebar_backdrop_color #000000;
-@define-color secondary_sidebar_bg_color #000000;
-@define-color dialog_bg_color #000000;
-@define-color card_bg_color #0d0d0d;
-@define-color popover_bg_color #0d0d0d;
+@define-color dialog_bg_color rgba(0, 0, 0, 0.85);
+@define-color popover_bg_color rgba(0, 0, 0, 0.85);
+@define-color card_bg_color rgba(255, 255, 255, 0.05);
+
+window.csd.background, popover > contents, tooltip { background-color: rgba(0, 0, 0, 0.85); }
+window.csd headerbar, window.csd .titlebar, window.csd .view, window.csd textview, window.csd textview > text,
+window.csd list, window.csd row, window.csd scrolledwindow, window.csd .sidebar, window.csd .navigation-sidebar,
+window.csd notebook > header, window.csd notebook > stack, window.csd viewport, window.csd toolbarview,
+window.csd .content-pane { background-color: transparent; background-image: none; box-shadow: none; }
 
 headerbar image, toolbar image, .sidebar image { -gtk-icon-size: 20px; }
 check, radio { min-width: 16px; min-height: 16px; }

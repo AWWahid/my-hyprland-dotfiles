@@ -101,6 +101,17 @@ for gtk in gtk-3.0 gtk-4.0; do
 EOF
 done
 
+# Firefox (not stowed): both modes' accents, since it switches light/dark live from the portal.
+# userChrome.css is read at startup, so a new accent shows after Firefox restarts
+fx=$(dirname "$(readlink -f "$0")")/../../../../firefox/chrome/colors.css
+for m in dark light; do
+    a=$(sed -n "s/^$m=#\\?//p" $cfg/hypr/accent.conf)
+    (( 16#${a:0:2} * 299 + 16#${a:2:2} * 587 + 16#${a:4:2} * 114 > 150000 )) && fg='#000000' || fg='#ffffff'
+    [ $m = dark ] && echo '@media (prefers-color-scheme: dark) {' || echo '@media not (prefers-color-scheme: dark) {'
+    echo "  :root { --sys-accent: #$a !important; --sys-on-accent: $fg !important; }"
+    echo '}'
+done > "$fx"
+
 # Busy-cursor spinner. index.theme records the accent it was built with, so re-picking the same
 # color is free; personalize rewrites accent.conf every time, which is why mtime won't do.
 theme=macOS-accent-$mode
