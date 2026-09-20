@@ -1,0 +1,29 @@
+/* Obsidian UI rules that do not depend on the accent or the light/dark mode.
+   theme-toggle.sh appends this to the colours it generates and writes the result to
+   <vault>/.obsidian/snippets/dotfiles.css, the same way yazi's icons.toml is appended
+   to its generated theme.toml. Edit this file, never the copy in the vault: the vault
+   gitignores all of .obsidian/, and the copy is overwritten on every theme switch. */
+
+/* Obsidian paints the window chrome from its own vars, so pin the root too or the
+   theme's colour shows through around the edges. */
+body { background-color: var(--background-primary) !important; }
+
+/* Mouse targets. The file tree ships ~29px rows and a collapse arrow whose clickable
+   area is only the ~10px glyph; both are small enough to misclick at 1080p.
+   min-height is what actually sets the row height: padding alone gets partly absorbed
+   by the theme's own line-height. Obsidian already lays these rows out with flex, so
+   only the height is touched - setting display here shifts the arrow onto the label. */
+.nav-file-title,
+.nav-folder-title {
+    min-height: 34px;
+    align-items: center;
+}
+
+/* The arrow's hit area grows through a transparent overlay, so the glyph and the row
+   layout stay exactly where the theme put them. */
+.tree-item-icon.collapse-icon { position: relative; }
+.tree-item-icon.collapse-icon::after {
+    content: "";
+    position: absolute;
+    inset: -9px -7px;
+}
