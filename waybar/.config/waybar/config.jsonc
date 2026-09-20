@@ -20,6 +20,7 @@
     "group/dock": {
         "orientation": "horizontal",
         "modules": [
+            "custom/launcher",
             "custom/files",
             "custom/terminal",
             "custom/firefox",
@@ -28,6 +29,11 @@
             "custom/obsidian",
             "custom/activity"
         ]
+    },
+    "custom/launcher": {
+        "format": "\ue5c3",
+        "tooltip-format": "Launcher",
+        "on-click": "pkill -x fuzzel || fuzzel"
     },
     "custom/files": {
         "format": "\ue2c7",

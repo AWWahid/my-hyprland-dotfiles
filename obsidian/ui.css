@@ -27,3 +27,40 @@ body { background-color: var(--background-primary) !important; }
     position: absolute;
     inset: -9px -7px;
 }
+
+/* Active tab. The theme already draws it the macOS way - a lifted rounded card on the tab
+   strip - but it builds that from --background-primary over --background-secondary plus a
+   6%-black shadow, and here both backgrounds are the same flat black (or white) and the
+   shadow is invisible on it. So the lift is restored the way the rest of this setup does
+   it: the hover tint as the card's surface and a hairline border for its edge, no accent -
+   macOS marks the current tab by surface, not by colour. Three classes outbids the theme's
+   "body .workspace-tab-header.is-active", so no !important is needed.
+   Scoped to mod-root: the sidebar tab strips share these classes and are icon-only there. */
+.mod-root .workspace-tab-header.is-active {
+    background: var(--background-modifier-hover);
+    box-shadow: inset 0 0 0 1px var(--background-modifier-border);
+}
+.mod-root .workspace-tab-header.is-active .workspace-tab-header-inner-title {
+    color: var(--text-normal);
+}
+.mod-root .workspace-tab-header:not(.is-active) .workspace-tab-header-inner-title {
+    color: var(--text-muted);
+}
+
+/* Animations: as short as possible while still being a transition, so nothing snaps.
+   The vars cover what core and the theme animate deliberately; the blanket rule catches
+   everything else, since plenty of durations are hardcoded in core CSS rather than read
+   from the vars. transition-delay goes to zero too - a delay is pure waiting, not motion.
+   Only transition-duration is forced, never animation-duration: keyframe animations include
+   indeterminate spinners, and shortening those just makes them whirl. */
+body {
+    --anim-duration-superfast: 60ms;
+    --anim-duration-fast: 60ms;
+    --anim-duration-moderate: 60ms;
+    --anim-duration-slow: 60ms;
+}
+
+*, *::before, *::after {
+    transition-duration: 60ms !important;
+    transition-delay: 0s !important;
+}

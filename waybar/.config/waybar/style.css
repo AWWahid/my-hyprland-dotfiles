@@ -38,6 +38,7 @@ window#waybar {
    27px glyph + 6px padding each side = 39px hit target; padding is the gap, so there is no dead zone */
 #custom-power,
 #custom-expand,
+#custom-launcher,
 #custom-files,
 #custom-terminal,
 #custom-firefox,
@@ -75,6 +76,7 @@ window#waybar {
 #battery,
 #custom-expand,
 #custom-power,
+#custom-launcher,
 #custom-files,
 #custom-terminal,
 #custom-firefox,
@@ -153,6 +155,7 @@ window#waybar {
 }
 
 /* app launchers are the main targets: bigger glyphs and wider hit areas (33px + 9px each side = 51px) */
+#custom-launcher,
 #custom-files,
 #custom-terminal,
 #custom-firefox,
