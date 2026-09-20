@@ -25,6 +25,7 @@
             "custom/firefox",
             "custom/zed",
             "custom/notepad",
+            "custom/obsidian",
             "custom/activity"
         ]
     },
@@ -47,6 +48,11 @@
         "format": "\ue86f",
         "tooltip-format": "Zed",
         "on-click": "~/.local/bin/zed"
+    },
+    "custom/obsidian": {
+        "format": "\uf8f1",
+        "tooltip-format": "Obsidian",
+        "on-click": "~/.local/opt/obsidian/Obsidian.AppImage --ozone-platform-hint=auto --enable-features=WaylandWindowDecorations"
     },
     "custom/activity": {
         "format": "\ueaa2",

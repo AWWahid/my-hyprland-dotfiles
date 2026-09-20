@@ -14,6 +14,7 @@
 !icons/.local
 !kitty/.local
 !bash/.local
+!fonts/.local
 
 # OS garbage
 .DS_Store

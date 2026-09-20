@@ -43,6 +43,7 @@ window#waybar {
 #custom-firefox,
 #custom-zed,
 #custom-notepad,
+#custom-obsidian,
 #custom-activity,
 #network,
 #bluetooth,
@@ -79,6 +80,7 @@ window#waybar {
 #custom-firefox,
 #custom-zed,
 #custom-notepad,
+#custom-obsidian,
 #custom-activity,
 #custom-notifications {
     padding: 0 6px;
@@ -156,9 +158,15 @@ window#waybar {
 #custom-firefox,
 #custom-zed,
 #custom-notepad,
+#custom-obsidian,
 #custom-activity {
     font-size: 33px;
     padding: 0 9px;
+}
+
+/* the Obsidian gem is not in Material Symbols; DotfilesIcons.ttf carries it at U+F8F1 */
+#custom-obsidian {
+    font-family: "Dotfiles Icons";
 }
 
 /* breathing room between power and the workspace numbers */

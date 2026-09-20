@@ -1,0 +1,63 @@
+#!/usr/bin/env bash
+# Fetch the latest Obsidian desktop AppImage if it differs from the installed one,
+# and refresh the icon theme entries from it.
+set -euo pipefail
+
+dir="$HOME/.local/opt/obsidian"
+app="$dir/Obsidian.AppImage"
+
+# The shipped icon is the gem on a dark rounded tile; every other app icon here is
+# a bare logo, so drop the tile and crop to the gem.
+install_icons() {
+    local tmp
+    tmp=$(mktemp -d)
+    trap 'rm -rf "$tmp"' RETURN
+    ( cd "$tmp" && "$app" --appimage-extract \
+        'usr/share/icons/hicolor/512x512/apps/obsidian.png' >/dev/null )
+
+    local src="$tmp/squashfs-root/usr/share/icons/hicolor/512x512/apps/obsidian.png"
+    [ -f "$src" ] || { echo "no 512px icon in the AppImage" >&2; return 1; }
+
+    # Flood the tile away, then crop to the saturated (purple) pixels so the
+    # tile's antialiased rounded corners go with it.
+    local box
+    box=$(magick "$src" -colorspace HSL -channel G -separate +channel -threshold 25% -format '%@' info:)
+    magick "$src" \
+        -fuzz 22% -fill none -draw 'alpha 5,5 floodfill' \
+        -fuzz 22% -fill none -draw 'alpha 60,60 floodfill' \
+        -crop "$box" +repage -trim +repage \
+        -background none -gravity center -extent '%[fx:max(w,h)]x%[fx:max(w,h)]' \
+        "$tmp/gem.png"
+
+    local s d inner
+    for s in 16 24 32 48 64 128 256 512; do
+        d="$HOME/.local/share/icons/hicolor/${s}x${s}/apps"
+        mkdir -p "$d"
+        inner=$(( s * 92 / 100 ))
+        magick "$tmp/gem.png" -resize ${inner}x${inner} \
+            -background none -gravity center -extent ${s}x${s} "$d/obsidian.png"
+    done
+    gtk-update-icon-cache -f -t "$HOME/.local/share/icons/hicolor" 2>/dev/null || true
+}
+
+latest=$(curl -fsSL 'https://api.github.com/repos/obsidianmd/obsidian-releases/releases?per_page=25' \
+  | grep -oE 'https://[^"]*/Obsidian-[0-9.]+\.AppImage' | head -1)
+[ -n "$latest" ] || { echo "could not find a release" >&2; exit 1; }
+
+version=${latest##*/Obsidian-}; version=${version%.AppImage}
+current=$(cat "$dir/.version" 2>/dev/null || echo none)
+
+if [ "$version" = "$current" ] && [ -x "$app" ]; then
+    echo "Obsidian $version is current"
+    [ "${1-}" = "--icons" ] && install_icons && echo "icons refreshed"
+    exit 0
+fi
+
+echo "updating Obsidian $current -> $version"
+mkdir -p "$dir"
+curl -fL --progress-bar -o "$app.new" "$latest"
+chmod +x "$app.new"
+mv "$app.new" "$app"
+printf '%s\n' "$version" > "$dir/.version"
+install_icons
+echo "done"

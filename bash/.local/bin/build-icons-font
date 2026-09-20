@@ -1,0 +1,84 @@
+#!/usr/bin/env bash
+# Build DotfilesIcons.ttf: glyphs waybar needs that Material Symbols has no icon for.
+# Regenerates from source art, so it is safe to re-run after an app updates its logo.
+#   U+F8F1  Obsidian gem (traced from the AppImage's own icon)
+# Needs: ImageMagick, potrace, fontforge. Build-time only; the .ttf is committed.
+set -euo pipefail
+
+out="$HOME/dotfiles/fonts/.local/share/fonts/DotfilesIcons.ttf"
+appimage="$HOME/.local/opt/obsidian/Obsidian.AppImage"
+tmp=$(mktemp -d); trap 'rm -rf "$tmp"' EXIT
+
+[ -x "$appimage" ] || { echo "Obsidian AppImage not found at $appimage" >&2; exit 1; }
+
+( cd "$tmp" && "$appimage" --appimage-extract \
+    'usr/share/icons/hicolor/512x512/apps/obsidian.png' >/dev/null )
+src="$tmp/squashfs-root/usr/share/icons/hicolor/512x512/apps/obsidian.png"
+
+# Same tile removal as obsidian-update, giving the bare gem on transparency.
+box=$(magick "$src" -colorspace HSL -channel G -separate +channel -threshold 25% -format '%@' info:)
+magick "$src" \
+    -fuzz 22% -fill none -draw 'alpha 5,5 floodfill' \
+    -fuzz 22% -fill none -draw 'alpha 60,60 floodfill' \
+    -crop "$box" +repage -trim +repage \
+    -background none -gravity center -extent '%[fx:max(w,h)]x%[fx:max(w,h)]' "$tmp/gem.png"
+
+# A font glyph is one colour, so the gem's facets have to be cut out of it as
+# gaps. Each facet is a smooth gradient and the boundaries between them are hard
+# steps, so an edge filter picks out the facet lines and little else.
+# STROKE is in source pixels on a ~421px gem: 9 breaks up at bar size, 21 turns
+# chunky. Lines stop just short of the outline, keeping the glyph one shape.
+STROKE=17
+R=$(( STROKE / 2 ))
+magick "$tmp/gem.png" -alpha extract -threshold 50% "$tmp/sil.png"
+magick "$tmp/gem.png" -alpha remove -alpha off -colorspace Gray \
+    -morphology EdgeOut Diamond:1 -auto-level -threshold 15% "$tmp/lines.png"
+magick "$tmp/sil.png" -morphology Erode Disk:$(( R + 2 )) "$tmp/interior.png"
+magick "$tmp/lines.png" "$tmp/interior.png" -compose Multiply -composite \
+    -morphology Dilate Disk:$R "$tmp/facets.png"
+magick "$tmp/sil.png" \( "$tmp/facets.png" -negate \) -compose Multiply -composite \
+    -threshold 50% -negate -bordercolor white -border 4 "$tmp/mask.pbm"
+
+potrace --svg --alphamax 1.0 --turdsize 8 -o "$tmp/gem.svg" "$tmp/mask.pbm"
+
+fontforge -quiet -lang=py -script /dev/stdin "$tmp/gem.svg" "$out" <<'PY'
+import sys, fontforge, psMat
+svg, out = sys.argv[1], sys.argv[2]
+
+# Match Material Symbols Filled so the glyph shares a baseline and optical size.
+EM, ASCENT, DESCENT = 960, 768, 192
+WIDTH, BOX, CX, CY = 960, 800, 480, 480   # icons fit an 800x800 box centred at (480,480)
+
+f = fontforge.font()
+f.fontname, f.familyname, f.fullname = "DotfilesIcons", "Dotfiles Icons", "Dotfiles Icons"
+f.em, f.ascent, f.descent = EM, ASCENT, DESCENT
+f.encoding = "UnicodeFull"
+
+# Copy Material Symbols' vertical metrics verbatim, so a line mixing the two
+# fonts gets one line box and one baseline.
+f.hhea_ascent, f.hhea_descent, f.hhea_linegap = 1056, -96, 0
+f.os2_typoascent, f.os2_typodescent, f.os2_typolinegap = 1056, -96, 0
+f.os2_winascent, f.os2_windescent = 1062, 91
+for a in ("hhea_ascent_add", "hhea_descent_add",
+          "os2_typoascent_add", "os2_typodescent_add",
+          "os2_winascent_add", "os2_windescent_add"):
+    setattr(f, a, False)
+
+g = f.createChar(0xF8F1, "obsidian")
+g.importOutlines(svg)
+g.removeOverlap()
+g.correctDirection()
+
+xmin, ymin, xmax, ymax = g.boundingBox()
+w, h = xmax - xmin, ymax - ymin
+s = BOX / max(w, h)
+g.transform(psMat.scale(s))
+
+xmin, ymin, xmax, ymax = g.boundingBox()
+g.transform(psMat.translate(CX - (xmin + xmax) / 2, CY - (ymin + ymax) / 2))
+g.width = WIDTH
+
+f.generate(out)
+print("bbox", [round(v) for v in f[0xF8F1].boundingBox()], "width", f[0xF8F1].width)
+PY
+echo "wrote $out"
