@@ -23,6 +23,7 @@
             "custom/launcher",
             "custom/files",
             "custom/terminal",
+            "custom/downloads",
             "custom/firefox",
             "custom/zed",
             "custom/notepad",
@@ -49,6 +50,11 @@
         "format": "\ue80b",
         "tooltip-format": "Firefox",
         "on-click": "flatpak run org.mozilla.firefox"
+    },
+    "custom/downloads": {
+        "format": "\uf090",
+        "tooltip-format": "Downloads",
+        "on-click": "~/.config/hypr/scripts/downloads.sh"
     },
     "custom/zed": {
         "format": "\ue86f",

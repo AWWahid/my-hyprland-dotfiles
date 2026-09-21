@@ -11,7 +11,7 @@ window.csd.background, popover > contents, tooltip { background-color: rgba(255,
 window.csd headerbar, window.csd .titlebar, window.csd .view, window.csd textview, window.csd textview > text,
 window.csd list, window.csd row, window.csd scrolledwindow, window.csd .sidebar, window.csd .navigation-sidebar,
 window.csd notebook > header, window.csd notebook > stack, window.csd viewport, window.csd toolbarview,
-window.csd .content-pane { background-color: transparent; background-image: none; box-shadow: none; }
+window.csd .sidebar-pane, window.csd .content-pane { background-color: transparent; background-image: none; box-shadow: none; }
 
 headerbar image, toolbar image, .sidebar image { -gtk-icon-size: 20px; }
 check, radio { min-width: 16px; min-height: 16px; }

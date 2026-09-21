@@ -208,6 +208,20 @@ EOF
     done
 fi
 
+# Tray icons: apps that ship a full-color logo look foreign among the bar's flat glyphs.
+# $XDG_DATA_HOME/icons outranks the Flatpak exports, so a monochrome copy under the app's own
+# icon name shadows it. Add an `apps/<icon-name>.svg` line here for any future offender.
+trayicons=$icons/hicolor/scalable/apps
+mkdir -p $trayicons
+for name in io.github.giantpinkrobots.varia; do
+    cat > $trayicons/$name.svg <<EOF
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">
+<path fill="#$accent" d="M11 3h2v8.2l3.1-3.1 1.4 1.4-5.5 5.5-5.5-5.5 1.4-1.4L11 11.2V3z"/>
+<path fill="#$accent" d="M4 18h16v2.5H4z"/>
+</svg>
+EOF
+done
+
 # Busy-cursor spinner. index.theme records the accent it was built with, so re-picking the same
 # color is free; personalize rewrites accent.conf every time, which is why mtime won't do.
 theme=macOS-accent-$mode

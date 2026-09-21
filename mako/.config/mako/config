@@ -29,6 +29,11 @@ on-button-right=exec makoctl menu -n "$id" -- fuzzel --dmenu --prompt "Action: "
 [grouped]
 format=<b>%s</b>  <small>(%g)</small>\n%b
 
+# Varia announces every close to background mode, on every close; nothing to act on
+[summary="Background Mode"]
+invisible=1
+on-notify=none
+
 # Alerts: stay until dismissed
 [urgency=critical]
 default-timeout=0
