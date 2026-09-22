@@ -14,6 +14,7 @@
 #custom-nightshift:hover,
 #custom-notifications:hover,
 #pulseaudio:hover,
+#battery:hover,
 #clock:hover,
 #custom-power:hover {
     background: alpha(@fg, 0.12);

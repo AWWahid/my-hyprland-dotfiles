@@ -66,6 +66,8 @@ hl.on("hyprland.start", function ()
     hl.exec_cmd("waybar")
     hl.exec_cmd("hyprpaper")
     hl.exec_cmd("hypridle")
+    -- CPU power knobs as last chosen from the waybar battery menu (TLP sets them at boot)
+    hl.exec_cmd("~/.config/hypr/scripts/power-mode.sh apply")
 end)
 
 

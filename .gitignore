@@ -40,3 +40,6 @@ yazi/.config/yazi/plugins/mount.yazi/
 firefox/chrome/colors.css
 # Rust apps resolve the newest compatible crates on each `cargo install`
 Cargo.lock
+
+# Untested hardware workaround, kept local (see the file's header)
+docs/wifi-rtw88-aspm.md

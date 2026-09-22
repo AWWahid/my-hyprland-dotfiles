@@ -13,6 +13,7 @@
 #bluetooth:hover,
 #custom-notifications:hover,
 #pulseaudio:hover,
+#battery:hover,
 #clock:hover,
 #custom-power:hover {
     background-image: linear-gradient(alpha(@fg, 0.5), alpha(@fg, 0.5)), linear-gradient(alpha(@fg, 0.5), alpha(@fg, 0.5));

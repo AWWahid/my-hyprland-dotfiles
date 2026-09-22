@@ -164,7 +164,8 @@
             "\uf0a1",
             "\ue1a5"
         ],
-        "tooltip-format": "{timeTo}"
+        "tooltip-format": "{timeTo}",
+        "on-click": "~/.config/hypr/scripts/power-mode.sh"
     },
     "custom/power": {
         "format": "\uf8c7",

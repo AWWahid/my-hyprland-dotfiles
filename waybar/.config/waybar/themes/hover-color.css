@@ -13,6 +13,7 @@
 #bluetooth:hover,
 #custom-notifications:hover,
 #pulseaudio:hover,
+#battery:hover,
 #clock:hover,
 #custom-power:hover {
     color: @hover_icon;
