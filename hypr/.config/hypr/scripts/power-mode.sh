@@ -1,8 +1,9 @@
 #!/usr/bin/env bash
-# Power menu (click the battery module in waybar). Changes the three CPU power knobs
-# TLP applies at boot, and remembers them for the next login.
+# Power menu (click the battery module in waybar). Owns the three CPU power knobs
+# outright - TLP no longer sets them (see tlp/01-dotfiles.conf), because it re-applied
+# its own values on every resume and every charger event and wiped the choice.
 #   waybar:       power-mode.sh          open the menu
-#   hyprland.lua: power-mode.sh apply    restore what was last chosen
+#   hyprland.lua: power-mode.sh apply    write the last choice, or the defaults
 #
 # Writing to /sys needs the video group; tmpfiles/99-cpu-power.conf grants it (see
 # CLAUDE.md). Current values are read back from sysfs rather than the state file, so
@@ -29,17 +30,25 @@ save() {
         "$(epp_now)" "$(turbo_now)" "$(flag_now $pstate/hwp_dynamic_boost)" >"$state"
 }
 
-# Restore at login. Silent, and a no-op on a machine that has never opened the menu,
-# which leaves TLP's own defaults standing.
+# Battery-first defaults, used until the menu is opened for the first time. This CPU
+# (i5-1235U) runs intel_pstate in active mode with HWP, so the governor is only a hint
+# and EPP is the real lever. balance_power rather than power: with turbo off the
+# expensive high-voltage states are gone anyway, and power makes the ramp sluggish on
+# the short bursts this laptop actually does (loading a page). Turbo off pins the
+# ceiling to base clock (1.3 GHz on the P-cores, down from 4.4): ~6x less power (it
+# scales with voltage squared) for ~3x longer work. Raise it from the menu for
+# anything sustained.
+defaults() { printf 'epp=balance_power\nturbo=off\nboost=off\n'; }
+
+# Write the knobs. Runs at login and again after resume; silent either way.
 if [ "$1" = apply ]; then
-    [ -r "$state" ] || exit 0
     while IFS='=' read -r key value; do
         case "$key" in
             epp) set_epp "$value" ;;
             turbo) set_turbo "$value" ;;
             boost) set_boost "$value" ;;
         esac
-    done <"$state"
+    done < <([ -r "$state" ] && cat "$state" || defaults)
     exit 0
 fi
 
