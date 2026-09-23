@@ -149,7 +149,6 @@
         "on-click": "~/.config/hypr/scripts/bt-menu.sh"
     },
     "battery": {
-        "bat": "BAT0",
         "interval": 60,
         "states": {
             "low": 20

@@ -7,7 +7,7 @@
 
 use gtk::{gdk, gdk_pixbuf, gio, glib, prelude::*};
 use gtk4_layer_shell::{Edge, KeyboardMode, Layer, LayerShell};
-use std::{cell::Cell, fs, path::{Path, PathBuf}, process::Command, rc::Rc};
+use std::{cell::{Cell, RefCell}, fs, path::{Path, PathBuf}, process::Command, rc::Rc};
 
 // macOS accent colors
 const PRESETS: [(&str, &str); 8] = [
@@ -24,6 +24,12 @@ fn wallpaper_link() -> PathBuf { wallpaper_dir().join("current") }
 fn source_link() -> PathBuf { wallpaper_dir().join("source") }
 /// Not in ~/.cache: hyprpaper needs the copy at login, so a cache cleaner must not remove it
 fn scaled_dir() -> PathBuf { wallpaper_dir().join("scaled") }
+/// Holds the folder the panel opens in, set with Make default
+fn folder_file() -> PathBuf { home().join(".local/state/personalize/wallpaper-folder") }
+fn default_folder() -> PathBuf {
+    fs::read_to_string(folder_file()).ok().map(|p| PathBuf::from(p.trim())).filter(|p| p.is_dir())
+        .unwrap_or_else(|| home().join("Pictures/Wallpapers"))
+}
 
 fn mtime(p: &Path) -> Option<u64> {
     Some(fs::metadata(p).ok()?.modified().ok()?.duration_since(std::time::UNIX_EPOCH).ok()?.as_secs())
@@ -120,7 +126,9 @@ fn fit(src: &Path) -> (PathBuf, Option<(i32, i32)>) {
         let (sw, sh) = screen_size()?;
         let (_, iw, ih) = gdk_pixbuf::Pixbuf::file_info(src)?;
         let k = f64::max(sw as f64 / iw as f64, sh as f64 / ih as f64);
-        if k >= 1.0 { return None }
+        // Outside home (a removable or shared drive) always gets a copy, so login never waits on that drive
+        if k >= 1.0 && src.starts_with(home()) { return None }
+        let k = k.min(1.0);
         let (w, h) = ((iw as f64 * k).ceil() as i32, (ih as f64 * k).ceil() as i32);
         let name = format!("{}-{}-{w}x{h}.png", src.file_name()?.to_string_lossy(), mtime(src)?);
         Some((scaled_dir().join(name), (w, h)))
@@ -197,11 +205,11 @@ fn run(op: Op, mut s: State) {
 /// (wallpaper, cached thumbnail); thumbnails are keyed by mtime so an edited image gets a new one.
 /// Thumbnails left over from removed or edited wallpapers are dropped here, at panel open, so
 /// nothing has to run in the background to keep the cache from growing.
-fn wallpapers() -> Vec<(PathBuf, PathBuf)> {
+fn wallpapers(folder: &Path) -> Vec<(PathBuf, PathBuf)> {
     let cache = home().join(".cache/personalize");
     let _ = fs::create_dir_all(&cache);
     // Returning before the prune matters: an unreadable directory must not empty the cache
-    let Ok(dir) = fs::read_dir(home().join("Pictures/Wallpapers")) else { return vec![] };
+    let Ok(dir) = fs::read_dir(folder) else { return vec![] };
     // Formats hyprpaper can load
     let mut files: Vec<PathBuf> = dir.flatten().map(|e| e.path())
         .filter(|p| p.extension().and_then(|e| e.to_str())
@@ -242,7 +250,10 @@ fn css(s: &State, walls: &[(PathBuf, PathBuf)]) -> String {
     // Images as CSS backgrounds: a Picture's natural size (the thumbnail) would stretch the layout
     let mut images: String = walls.iter().enumerate()
         .map(|(i, (_, t))| format!(".wall{i} {{ background-image: url(\"file://{}\"); }}\n", t.display())).collect();
-    if let Some((_, t)) = walls.iter().find(|(w, _)| Some(w) == s.wallpaper.as_ref()) {
+    // The shown copy stands in when the current wallpaper is not in the browsed folder
+    let current = walls.iter().find(|(w, _)| Some(w) == s.wallpaper.as_ref()).map(|(_, t)| t.clone())
+        .or_else(|| fs::canonicalize(wallpaper_link()).ok());
+    if let Some(t) = current {
         images += &format!(".current-wall {{ background-image: url(\"file://{}\"); }}\n", t.display());
     }
     format!(r#"
@@ -294,6 +305,8 @@ button {{ border: none; box-shadow: none; outline: none; background: none; color
 .thumb {{ margin: 5px; border-radius: 8px; }}
 .thumb:hover {{ box-shadow: 0 0 0 3px @p_border; }}
 .thumb.selected {{ box-shadow: 0 0 0 3px @p_accent; }}
+.folder-btn {{ background: @p_ctrl; border-radius: 7px; padding: 4px 12px; font-weight: normal; }}
+.folder-btn:hover {{ background: @p_ctrl_on; }}
 .use {{ background: @p_accent; color: @p_on_accent; border-radius: 999px; padding: 6px 16px; }}
 .use:hover {{ background: shade(@p_accent, 1.1); }}
 "#)
@@ -310,7 +323,10 @@ struct Ctx {
     window: gtk::Window,
     provider: gtk::CssProvider,
     main_loop: glib::MainLoop,
-    walls: Vec<(PathBuf, PathBuf)>,
+    folder: RefCell<PathBuf>,
+    walls: RefCell<Vec<(PathBuf, PathBuf)>>,
+    /// The folder picker is open: the panel is hidden, and losing focus must not close it
+    picking: Cell<bool>,
     pane: Cell<Pane>,
     busy: Cell<bool>,
     quit_pending: Cell<bool>,
@@ -319,6 +335,7 @@ struct Ctx {
 impl Ctx {
     /// Closing mid-apply would kill the half-written theme: hide now, quit once it finishes
     fn close(&self) {
+        if self.picking.get() { return }
         if self.busy.get() {
             self.window.set_visible(false);
             self.quit_pending.set(true);
@@ -342,7 +359,7 @@ fn dispatch(ctx: &Rc<Ctx>, op: Op) {
 
 fn refresh(ctx: &Rc<Ctx>) {
     let s = State::load();
-    ctx.provider.load_from_string(&css(&s, &ctx.walls));
+    ctx.provider.load_from_string(&css(&s, &ctx.walls.borrow()));
     ctx.window.set_child(Some(&build(ctx, &s)));
 }
 
@@ -464,7 +481,7 @@ fn appearance(ctx: &Rc<Ctx>, s: &State, pane: &gtk::Box) {
     wall_swatch.add_css_class("current-wall");
     wall_swatch.set_tooltip_text(Some("Wallpaper"));
     if s.from_wallpaper { wall_swatch.add_css_class("selected") }
-    let cur_thumb = ctx.walls.iter().find(|(w, _)| Some(w) == s.wallpaper.as_ref()).map(|(_, t)| t.clone());
+    let cur_thumb = ctx.walls.borrow().iter().find(|(w, _)| Some(w) == s.wallpaper.as_ref()).map(|(_, t)| t.clone());
     wall_swatch.connect_clicked({ let ctx = ctx.clone(); move |_| dispatch(&ctx, Op::FromWallpaper(cur_thumb.clone())) });
     swatches.append(&wall_swatch);
     let mut selected = if s.from_wallpaper { "Wallpaper" } else { "Custom" };
@@ -549,9 +566,11 @@ fn wallpaper(ctx: &Rc<Ctx>, s: &State, pane: &gtk::Box) {
     preview.set_margin_top(12);
     preview.set_margin_bottom(12);
     card.append(&preview);
-    // Name as listed in ~/Pictures/Wallpapers (the resolved path may be a system file behind a symlink)
-    let name = ctx.walls.iter().find(|(w, _)| Some(w) == s.wallpaper.as_ref())
+    // Name as listed in the folder (the resolved path may be a system file behind a symlink)
+    let walls = ctx.walls.borrow();
+    let name = walls.iter().find(|(w, _)| Some(w) == s.wallpaper.as_ref())
         .and_then(|(_, t)| t.file_name()?.to_str()?.rsplit_once('-').map(|(n, _)| n.to_string()))
+        .or_else(|| s.wallpaper.as_ref()?.file_name().map(|n| n.to_string_lossy().into_owned()))
         .and_then(|n| Path::new(&n).file_stem().map(|n| n.to_string_lossy().into_owned()))
         .unwrap_or_default();
     let l = label(&name, "");
@@ -559,14 +578,37 @@ fn wallpaper(ctx: &Rc<Ctx>, s: &State, pane: &gtk::Box) {
     card.append(&l);
     pane.append(&card);
 
-    pane.append(&label("Pictures", "section"));
+    let folder = ctx.folder.borrow().clone();
+    let head = gtk::Box::new(gtk::Orientation::Horizontal, 8);
+    head.add_css_class("section");
+    let title = label(&folder.file_name().map_or("/".into(), |n| n.to_string_lossy().into_owned()), "");
+    title.set_tooltip_text(Some(&folder.to_string_lossy()));
+    title.set_hexpand(true);
+    title.set_ellipsize(gtk::pango::EllipsizeMode::Middle);
+    head.append(&title);
+    if folder != default_folder() {
+        let b = gtk::Button::with_label("Make default");
+        b.add_css_class("folder-btn");
+        b.connect_clicked({ let ctx = ctx.clone(); move |_| {
+            let _ = fs::create_dir_all(folder_file().parent().unwrap());
+            let _ = fs::write(folder_file(), ctx.folder.borrow().to_string_lossy().as_bytes());
+            refresh(&ctx);
+        }});
+        head.append(&b);
+    }
+    let browse = gtk::Button::with_label("Browse…");
+    browse.add_css_class("folder-btn");
+    browse.connect_clicked({ let ctx = ctx.clone(); move |_| browse_folder(&ctx) });
+    head.append(&browse);
+    pane.append(&head);
+    if walls.is_empty() { pane.append(&label("No pictures in this folder", "caption")); }
     let grid = gtk::FlowBox::new();
     grid.set_selection_mode(gtk::SelectionMode::None);
     grid.set_homogeneous(true);
     grid.set_min_children_per_line(4);
     grid.set_max_children_per_line(4);
     grid.set_valign(gtk::Align::Start);
-    for (i, (wall, thumb)) in ctx.walls.iter().enumerate() {
+    for (i, (wall, thumb)) in walls.iter().enumerate() {
         let b = sized("thumb", 124, 70);
         b.add_css_class(&format!("wall{i}"));
         if Some(wall) == s.wallpaper.as_ref() { b.add_css_class("selected") }
@@ -575,6 +617,26 @@ fn wallpaper(ctx: &Rc<Ctx>, s: &State, pane: &gtk::Box) {
         grid.append(&b);
     }
     pane.append(&grid);
+}
+
+/// Picks the folder the grid shows. The picker is a normal window, which this layer-shell panel
+/// would cover, so the panel hides until it is closed.
+fn browse_folder(ctx: &Rc<Ctx>) {
+    let dialog = gtk::FileDialog::new();
+    dialog.set_title("Wallpaper folder");
+    dialog.set_initial_folder(Some(&gio::File::for_path(&*ctx.folder.borrow())));
+    ctx.picking.set(true);
+    ctx.window.set_visible(false);
+    let ctx = ctx.clone();
+    glib::spawn_future_local(async move {
+        if let Some(path) = dialog.select_folder_future(None::<&gtk::Window>).await.ok().and_then(|f| f.path()) {
+            *ctx.walls.borrow_mut() = wallpapers(&path);
+            *ctx.folder.borrow_mut() = path;
+            refresh(&ctx);
+        }
+        ctx.window.present();
+        ctx.picking.set(false);
+    });
 }
 
 fn main() {
@@ -604,7 +666,9 @@ fn main() {
         window: window.clone(),
         provider,
         main_loop: glib::MainLoop::new(None, false),
-        walls: wallpapers(),
+        walls: RefCell::new(wallpapers(&default_folder())),
+        folder: RefCell::new(default_folder()),
+        picking: Cell::new(false),
         pane: Cell::new(Pane::Wallpaper),
         busy: Cell::new(false),
         quit_pending: Cell::new(false),
