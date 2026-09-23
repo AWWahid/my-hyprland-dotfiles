@@ -14,7 +14,8 @@ epps=/sys/devices/system/cpu/cpu*/cpufreq/energy_performance_preference
 state="${XDG_STATE_HOME:-$HOME/.local/state}/power-mode"
 
 notify() { notify-send -a "Power" "$@"; }
-pick() { fuzzel --dmenu --index --prompt "Power: " "$@"; }
+# No search line: every menu is short enough to click, and typing only filtered it
+pick() { fuzzel --dmenu --index --hide-prompt "$@"; }
 
 epp_now() { cat /sys/devices/system/cpu/cpu0/cpufreq/energy_performance_preference; }
 flag_now() { [ "$(cat "$1")" = 1 ] && echo on || echo off; }
@@ -61,7 +62,7 @@ mark() { [ "$1" = "$2" ] && printf '  %s  ✓\n' "$1" || printf '  %s\n' "$1"; }
 choose() { # choose <current> <value>...
     local current=$1
     shift
-    for value in "$@"; do mark "$value" "$current"; done | pick --lines $#
+    for value in "$@"; do mark "$value" "$current"; done | pick --lines $(($# < 15 ? $# : 15))
 }
 
 labels=(
@@ -79,13 +80,29 @@ case $(printf '%s\n' "${labels[@]}" | pick --lines ${#labels[@]}) in
         notify "Energy preference" "${options[$index]}"
         ;;
     1)
-        options=(40 50 60 70 80 100)
-        labels=()
-        for pct in "${options[@]}"; do labels+=("$pct% · $(ghz "$pct")"); done
-        index=$(choose "$(cap_now)% · $(ghz "$(cap_now)")" "${labels[@]}") || exit 0
-        [ -n "$index" ] || exit 0
-        set_cap "${options[$index]}"
-        notify "Max frequency" "${labels[$index]}"
+        # ▲/▼ step one 100 MHz clock bin on the fastest core (the finest step the CPU
+        # takes; 1% is only 44 MHz and often changes nothing); typing a percentage
+        # sets it directly. The entries hold no digits, so typing never matches one.
+        bins=$(($(sort -n /sys/devices/system/cpu/cpu*/cpufreq/cpuinfo_max_freq | tail -1) / 100000))
+        min=$(cat $pstate/min_perf_pct)
+        while :; do
+            cur=$(cap_now)
+            bin=$((cur * bins / 100))
+            choice=$(printf '  ▲  Up\n  ▼  Down\n' | fuzzel --dmenu --lines 2 --match-mode=exact \
+                --prompt "Max frequency $cur% · $(ghz "$cur")  " --placeholder "type $min-100") || exit 0
+            case $choice in
+                *Up) pct=$((((bin + 1) * 100 + bins - 1) / bins)) ;;
+                *Down) pct=$((((bin - 1) * 100 + bins - 1) / bins)) ;;
+                *[!0-9]* | '') continue ;;
+                *) pct=$((10#$choice)) ;;
+            esac
+            ((pct > 100)) && pct=100
+            ((pct < min)) && pct=$min
+            set_cap "$pct"
+            save
+            case $choice in *Up | *Down) ;; *) break ;; esac
+        done
+        notify "Max frequency" "$(cap_now)% · $(ghz "$(cap_now)")"
         ;;
     2)
         index=$(choose "$(flag_now $pstate/hwp_dynamic_boost)" on off) || exit 0
