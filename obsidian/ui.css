@@ -28,6 +28,47 @@ body { background-color: var(--background-primary) !important; }
     inset: -9px -7px;
 }
 
+/* The rest of the mouse targets. Icon buttons (ribbon, sidebar and view headers) ship at
+   ~26px, the tab close button at ~16px, task checkboxes at 15px and status bar items at
+   ~22px tall. Icon buttons grow by padding so the glyph stays the same size; the tab close
+   button grows through an overlay like the collapse arrow, so the tab title keeps its room. */
+body { --checkbox-size: 18px; }
+
+.clickable-icon { padding: 6px 7px; }
+
+.workspace-tab-header-inner-close-button { position: relative; }
+.workspace-tab-header-inner-close-button::after {
+    content: "";
+    position: absolute;
+    inset: -6px;
+}
+
+.status-bar-item { padding-block: 4px; }
+
+/* Note tabs are wide but only ~24px tall inside a 40px strip; use more of the strip.
+   The theme draws them as rounded pills floating 4px clear of the strip, so the taller tab
+   is centred rather than grown to the bottom edge, and Obsidian's curved "feet" under the
+   active tab (meant for tabs that merge into the note below) are hidden. */
+.mod-root .workspace-tab-header-container-inner {
+    align-items: center;
+    margin-block: 0;
+    padding-block: 0;
+}
+.workspace .mod-root .workspace-tab-header {
+    height: 28px;
+    align-self: center;
+    padding-block: 0;   /* core's 1px/3.5px lifts the title off-centre in the pill */
+}
+.mod-root .workspace-tab-header-inner {
+    height: 100%;
+    align-items: center;
+}
+.mod-root .workspace-tab-header::before,
+.mod-root .workspace-tab-header::after { display: none; }
+
+/* Sidebar tab strips are icon-only, so their tabs are only as big as the glyph. */
+.workspace-tabs:not(.mod-root) .workspace-tab-header-inner { padding: 6px 7px; }
+
 /* Active tab. The theme already draws it the macOS way - a lifted rounded card on the tab
    strip - but it builds that from --background-primary over --background-secondary plus a
    6%-black shadow, and here both backgrounds are the same flat black (or white) and the
