@@ -137,7 +137,7 @@ hl.config({
         rounding_power = 2,
 
         -- No active/inactive_opacity: it fades text too. Apps draw 0.85 backgrounds themselves
-        -- (kitty, zed, waybar, fuzzel, mako, calendar, powermenu) so text stays solid
+        -- (kitty, zed, waybar, fuzzel, mako, calendar) so text stays solid
 
         -- Darken unfocused windows (focus indicator, since borders are off)
         dim_inactive = true,
@@ -295,7 +295,7 @@ hl.bind(mainMod .. " + R", hl.dsp.exec_cmd(menu))
 hl.bind(mainMod .. " + P", hl.dsp.window.pseudo())
 hl.bind(mainMod .. " + J", hl.dsp.layout("togglesplit"))    -- dwindle only
 hl.bind(mainMod .. " + L",      hl.dsp.exec_cmd("loginctl lock-session"))
-hl.bind(mainMod .. " + escape", hl.dsp.exec_cmd("pkill -x powermenu || powermenu"))
+hl.bind(mainMod .. " + escape", hl.dsp.exec_cmd("pkill -x fuzzel || ~/.config/hypr/scripts/power-button-menu.sh"))
 hl.bind(mainMod .. " + W",      hl.dsp.exec_cmd("pkill -x personalize || personalize"))  -- appearance, accent, bar icons, wallpaper
 hl.bind(mainMod .. " + SHIFT + D", hl.dsp.exec_cmd("~/.config/hypr/scripts/theme-toggle.sh"))  -- light/dark toggle
 
@@ -416,10 +416,10 @@ hl.window_rule({
     xray = false,
 })
 
--- Bar, launcher and notification centre (fuzzel), notifications (mako), calendar popup, power menu and personalize panel match window transparency with the same blur
+-- Bar, launcher and notification centre (fuzzel), notifications (mako), calendar popup and personalize panel match window transparency with the same blur
 hl.layer_rule({
     name  = "blur-layers",
-    match = { namespace = "^(waybar|launcher|notifications|calendar|powermenu|personalize)$" },
+    match = { namespace = "^(waybar|launcher|notifications|calendar|personalize)$" },
     blur  = true,
 })
 
@@ -433,15 +433,15 @@ hl.layer_rule({
 -- Popups always open over whatever is on screen, so they blur the real windows behind them
 hl.layer_rule({
     name  = "blur-behind-popups",
-    match = { namespace = "^(launcher|notifications|calendar|powermenu|personalize)$" },
+    match = { namespace = "^(launcher|notifications|calendar|personalize)$" },
     xray  = false,
 })
 
--- Blur only the visible panels, not the transparent parts: the calendar popup, power menu and personalize panel
+-- Blur only the visible panels, not the transparent parts: the calendar popup and personalize panel
 -- are full-screen transparent layers (clicking outside closes them); the launcher and notifications have rounded corners
 hl.layer_rule({
     name         = "popup-panel-only",
-    match        = { namespace = "^(calendar|powermenu|personalize|notifications|launcher)$" },
+    match        = { namespace = "^(calendar|personalize|notifications|launcher)$" },
     ignore_alpha = 0.01,
 })
 

@@ -170,7 +170,7 @@
     "custom/power": {
         "format": "\uf8c7",
         "tooltip": false,
-        "on-click": "pkill -x powermenu || powermenu"
+        "on-click": "pkill -x fuzzel || ~/.config/hypr/scripts/power-button-menu.sh"
     },
     "group/traydrawer": {
         "orientation": "horizontal",

@@ -1,6 +1,6 @@
 /* Normal app windows are tinted 0.85 like the rest of the system (text stays solid); surfaces inside them
    are transparent, since nested 0.85 layers stack back to nearly opaque. Popovers and tooltips are their own
-   surfaces. Scoped to window.csd so the layer-shell panels (calendar, powermenu, personalize) keep their own CSS;
+   surfaces. Scoped to window.csd so the layer-shell panels (calendar, personalize) keep their own CSS;
    window_bg_color stays solid because the calendar derives its 0.85 from it. */
 @define-color window_bg_color #000000;
 @define-color dialog_bg_color rgba(0, 0, 0, 0.85);
