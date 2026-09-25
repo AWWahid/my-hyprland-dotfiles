@@ -64,7 +64,7 @@ centre)
             ($now - .t) as $s
             | (if $s < 60 then "now" elif $s < 3600 then "\($s / 60 | floor)m"
                elif $s < 86400 then "\($s / 3600 | floor)h" else "\($s / 86400 | floor)d" end) as $ago
-            | "\(.app)  ·  \(.summary) — \(.body | gsub("\\s+"; " "))  ·  \($ago)"'
+            | "\(.app // .entry)  ·  \(.summary) — \(.body // "" | gsub("\\s+"; " "))  ·  \($ago)"'
     } | fuzzel --dmenu --index --no-sort --minimal-lines --lines 12 --width 40 \
         --anchor top-right --x-margin 16 --y-margin 16 --prompt "Notifications: ") || exit 0
 
