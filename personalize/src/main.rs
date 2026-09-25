@@ -654,6 +654,7 @@ fn main() {
 
     let window = gtk::Window::new();
     window.init_layer_shell();
+    window.add_css_class("layer-panel");
     window.set_namespace(Some("personalize"));
     window.set_layer(Layer::Top);
     // Cover the screen (minus the bar) so a click outside the panel can close it

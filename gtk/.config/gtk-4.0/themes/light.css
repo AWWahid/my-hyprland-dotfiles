@@ -1,17 +1,17 @@
 /* Normal app windows are tinted 0.85 like the rest of the system (text stays solid); surfaces inside them
    are transparent, since nested 0.85 layers stack back to nearly opaque. Popovers and tooltips are their own
-   surfaces. Scoped to window.csd so the layer-shell panels (calendar, personalize) keep their own CSS;
+   surfaces. Scoped to window:not(.layer-panel) so the layer-shell panels (calendar, personalize) keep their own CSS;
    window_bg_color stays solid because the calendar derives its 0.85 from it. */
 @define-color window_bg_color #ffffff;
 @define-color dialog_bg_color rgba(255, 255, 255, 0.85);
 @define-color popover_bg_color rgba(255, 255, 255, 0.85);
 @define-color card_bg_color rgba(0, 0, 0, 0.05);
 
-window.csd.background, popover > contents, tooltip { background-color: rgba(255, 255, 255, 0.85); }
-window.csd headerbar, window.csd .titlebar, window.csd .view, window.csd textview, window.csd textview > text,
-window.csd list, window.csd row, window.csd scrolledwindow, window.csd .sidebar, window.csd .navigation-sidebar,
-window.csd notebook > header, window.csd notebook > stack, window.csd viewport, window.csd toolbarview,
-window.csd .sidebar-pane, window.csd .content-pane { background-color: transparent; background-image: none; box-shadow: none; }
+window.background:not(.layer-panel), popover > contents, tooltip { background-color: rgba(255, 255, 255, 0.85); }
+window:not(.layer-panel) headerbar, window:not(.layer-panel) .titlebar, window:not(.layer-panel) .view, window:not(.layer-panel) textview, window:not(.layer-panel) textview > text,
+window:not(.layer-panel) list, window:not(.layer-panel) row, window:not(.layer-panel) scrolledwindow, window:not(.layer-panel) .sidebar, window:not(.layer-panel) .navigation-sidebar,
+window:not(.layer-panel) notebook > header, window:not(.layer-panel) notebook > stack, window:not(.layer-panel) viewport, window:not(.layer-panel) toolbarview,
+window:not(.layer-panel) .sidebar-pane, window:not(.layer-panel) .content-pane { background-color: transparent; background-image: none; box-shadow: none; }
 
 headerbar image, toolbar image, .sidebar image { -gtk-icon-size: 20px; }
 check, radio { min-width: 16px; min-height: 16px; }
