@@ -3,6 +3,6 @@ Name=Yazi File Manager
 Icon=yazi
 Type=Application
 Terminal=false
-Exec=sh -c 'exec kitty -c "$HOME/.config/kitty/yazi.conf" -e yazi "$@"' sh %f
+Exec=yazi-window %f
 Categories=System;FileTools;FileManager;
 MimeType=inode/directory;

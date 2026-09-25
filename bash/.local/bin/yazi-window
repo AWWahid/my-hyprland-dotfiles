@@ -1,0 +1,4 @@
+#!/bin/sh
+# yazi in its own kitty window, with its PID as its client ID so SUPER+C
+# (hypr scripts/close-window.sh) can find it and ask it to quit.
+exec kitty -c ~/.config/kitty/yazi.conf -e sh -c 'exec yazi --client-id $$ "$@"' sh "$@"
