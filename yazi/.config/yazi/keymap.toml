@@ -154,6 +154,11 @@ on = "<C-q>"
 run = "quit"
 desc = "Quit"
 
+[[mgr.prepend_keymap]]
+on = "<C-A-t>"
+run = "plugin explorer -- terminal"
+desc = "Open terminal here"
+
 # Right-click menu, from the keyboard
 [[mgr.prepend_keymap]]
 on = "<S-F10>"

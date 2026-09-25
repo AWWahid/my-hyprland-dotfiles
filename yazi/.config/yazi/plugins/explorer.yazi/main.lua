@@ -1,7 +1,7 @@
 --- @since 26.8.15
 -- File-explorer behaviour on top of yazi: the Quick Access start folder (built by
 -- quick-access.sh), a Trash-aware Delete, the right-click menu and a Finder-style status bar.
--- Entry: `plugin explorer -- open|openwith|delete|up|menu|home|copy|cut|paste`; also previews the Trash entry.
+-- Entry: `plugin explorer -- open|openwith|delete|up|menu [empty]|home|copy|cut|paste|copypath|terminal`; also previews the Trash entry.
 
 local M = {}
 
@@ -11,12 +11,13 @@ local TRASH = (os.getenv("XDG_STATE_HOME") or HOME .. "/.local/state") .. "/yazi
 local BUILD = HOME .. "/.config/yazi/quick-access.sh"
 local HOME_TRASH = (os.getenv("XDG_DATA_HOME") or HOME .. "/.local/share") .. "/Trash"
 
-local where = ya.sync(function()
+-- empty: the click landed below the last item, so the menu acts on the folder itself
+local where = ya.sync(function(_, empty)
 	local tab = cx.active
 	local cwd = tostring(tab.current.cwd)
-	local h = tab.current.hovered
+	local h = not empty and tab.current.hovered or nil
 	local urls = {}
-	for _, u in pairs(tab.selected) do
+	for _, u in pairs(empty and {} or tab.selected) do
 		urls[#urls + 1] = tostring(u)
 	end
 	if #urls == 0 and h then
@@ -29,6 +30,7 @@ local where = ya.sync(function()
 		trash_root = cwd:find("^trash:///@/*$") ~= nil,
 		hovered = h and { dir = h.cha.is_dir, link = h.link_to and tostring(h.link_to), url = tostring(h.url) },
 		urls = urls,
+		empty = empty,
 	}
 end)
 
@@ -226,22 +228,44 @@ function M.paste(w)
 	ya.emit("reveal", { Url(path) })
 end
 
+-- The selected or hovered items' paths, or on empty space the folder's; Quick Access shortcuts give the real folder
+function M.copypath(w)
+	local paths = w.empty and { w.cwd } or w.urls
+	if #paths == 0 then
+		return
+	elseif w.qa and not w.empty then
+		local out = Command("realpath"):arg({ "--", table.unpack(paths) }):stdout(Command.PIPED):output()
+		paths = { out and out.stdout:gsub("\n$", "") or table.concat(paths, "\n") }
+	end
+	Command("wl-copy"):arg({ "--", table.concat(paths, "\n") }):stdout(Command.NULL):stderr(Command.NULL):status()
+end
+
+-- $TERMINAL (kitty if unset) in this folder; Quick Access and Trash aren't real folders, so Home.
+-- setsid, so closing yazi doesn't take the terminal with it
+function M.terminal(w)
+	local dir = (w.qa or w.cwd:sub(1, 1) ~= "/") and HOME or w.cwd
+	Command("setsid"):arg({ "-f", os.getenv("TERMINAL") or "kitty" }):cwd(dir)
+		:stdout(Command.NULL):stderr(Command.NULL):status()
+end
+
+-- Items marked file act on the hovered or selected items and are left out on empty space
 function M.menu(w)
 	local items
 	if w.qa then
 		items = {
-			{ on = "o", desc = "Open", run = function() M.open(w) end },
+			{ on = "o", desc = "Open", file = true, run = function() M.open(w) end },
+			{ on = "y", desc = "Copy path", file = true, run = function() M.copypath(w) end },
 			{ on = "u", desc = "Unpin a folder…", run = function() ya.emit("plugin", { "yamb", "delete_by_key" }) end },
 		}
 	elseif w.trash then
 		items = {
-			{ on = "r", desc = "Restore", run = function()
+			{ on = "r", desc = "Restore", file = true, run = function()
 				if #w.urls > 0 then
 					trash_pub("trash-restore", w.urls)
 				end
 			end },
-			{ on = "d", desc = "Delete permanently", run = function() M.delete(w) end },
-			{ on = "s", desc = "Select / Unselect", run = function() ya.emit("toggle", {}) end },
+			{ on = "d", desc = "Delete permanently", file = true, run = function() M.delete(w) end },
+			{ on = "s", desc = "Select / Unselect", file = true, run = function() ya.emit("toggle", {}) end },
 			{ on = "a", desc = "Select all", run = function() ya.emit("toggle_all", { state = "on" }) end },
 			-- Empties everything; the list is only there because the message can't be empty
 			{ on = "e", desc = "Empty Trash", run = function()
@@ -252,16 +276,18 @@ function M.menu(w)
 		}
 	else
 		items = {
-			{ on = "o", desc = "Open", run = function() M.open(w) end },
-			{ on = "w", desc = "Open with…", run = function() M.openwith(w) end },
-			{ on = "r", desc = "Rename", run = function() ya.emit("rename", { cursor = "before_ext" }) end },
-			{ on = "c", desc = "Copy", run = function() M.copy(w) end },
-			{ on = "x", desc = "Cut", run = function() M.cut(w) end },
+			{ on = "o", desc = "Open", file = true, run = function() M.open(w) end },
+			{ on = "w", desc = "Open with…", file = true, run = function() M.openwith(w) end },
+			{ on = "r", desc = "Rename", file = true, run = function() ya.emit("rename", { cursor = "before_ext" }) end },
+			{ on = "c", desc = "Copy", file = true, run = function() M.copy(w) end },
+			{ on = "x", desc = "Cut", file = true, run = function() M.cut(w) end },
 			{ on = "v", desc = "Paste", run = function() M.paste(w) end },
+			{ on = "y", desc = w.empty and "Copy folder path" or "Copy path", run = function() M.copypath(w) end },
+			{ on = "T", desc = "Open terminal here", run = function() M.terminal(w) end },
 			{ on = "n", desc = "New folder", run = function() ya.emit("create", { dir = true }) end },
-			{ on = "d", desc = "Move to Trash", run = function() M.delete(w) end },
-			{ on = "i", desc = "Properties", run = function() ya.emit("spot", {}) end },
-			{ on = "s", desc = "Select / Unselect", run = function() ya.emit("toggle", {}) end },
+			{ on = "d", desc = "Move to Trash", file = true, run = function() M.delete(w) end },
+			{ on = "i", desc = "Properties", file = true, run = function() ya.emit("spot", {}) end },
+			{ on = "s", desc = "Select / Unselect", file = true, run = function() ya.emit("toggle", {}) end },
 			{ on = "a", desc = "Select all", run = function() ya.emit("toggle_all", { state = "on" }) end },
 			{ on = "f", desc = "Search…", run = function() ya.emit("search", { via = "fd" }) end },
 			{ on = "l", desc = "Filter this folder…", run = function() ya.emit("filter", { smart = true }) end },
@@ -278,13 +304,16 @@ function M.menu(w)
 	-- yazi's help lists every key (ours carry a description), searchable by typing
 	items[#items + 1] = { on = "?", desc = "Keyboard shortcuts…", run = function() ya.emit("help", {}) end }
 
-	local cands = {}
-	for i, item in ipairs(items) do
-		cands[i] = { on = item.on, desc = item.desc }
+	local shown, cands = {}, {}
+	for _, item in ipairs(items) do
+		if not (w.empty and item.file) then
+			shown[#shown + 1] = item
+			cands[#cands + 1] = { on = item.on, desc = item.desc }
+		end
 	end
 	local idx = ya.which { cands = cands }
 	if idx then
-		items[idx].run()
+		shown[idx].run()
 	end
 end
 
@@ -410,7 +439,7 @@ end
 function M:seek() end
 
 function M:entry(job)
-	local action, w = job.args[1], where()
+	local action, w = job.args[1], where(job.args[2] == "empty")
 	if M[action] and action ~= "setup" and action ~= "entry" and action ~= "peek" and action ~= "seek" then
 		M[action](w)
 	end

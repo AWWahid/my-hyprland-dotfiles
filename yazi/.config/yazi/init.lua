@@ -39,7 +39,9 @@ local current_click = Current.click
 function Current:click(event, up)
 	local all = self._folder.files
 	local file = self._folder.window[event.y - self._area.y + 1]
-	if not up then
+	if not up and event.is_right and not file then
+		return ya.emit("plugin", { "explorer", "menu empty" })
+	elseif not up then
 		local start = file or all[#all]
 		press = event.is_left and start and tostring(start.url) or nil
 		return current_click(self, event, up)
