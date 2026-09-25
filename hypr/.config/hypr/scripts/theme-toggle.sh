@@ -100,6 +100,15 @@ for gtk in gtk-3.0 gtk-4.0; do
 @define-color theme_selected_fg_color $on_accent;
 EOF
 done
+# libadwaita reads the named colours above; plain GTK4's built-in theme has its blue baked in
+cat >> $cfg/gtk-4.0/gtk.css <<EOF
+scale trough highlight, progressbar progress, levelbar block.filled { background-color: #$accent; background-image: none; border-color: #$accent; }
+notebook > header tab:checked { box-shadow: inset 0 -3px #$accent; }
+switch:checked, check:checked, radio:checked { background-color: #$accent; color: $on_accent; }
+button.suggested-action { background-color: #$accent; color: $on_accent; }
+selection, *:selected { background-color: alpha(#$accent, 0.3); }
+*:focus-visible { outline-color: alpha(#$accent, 0.5); }
+EOF
 
 # Firefox (not stowed): both modes' accents, since it switches light/dark live from the portal.
 # userChrome.css is read at startup, so a new accent shows after Firefox restarts
