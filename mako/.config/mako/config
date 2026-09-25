@@ -34,6 +34,17 @@ format=<b>%s</b>  <small>(%g)</small>\n%b
 invisible=1
 on-notify=none
 
+# Screenshots: a thumbnail in the bottom-right corner, click to edit; kept out of the centre's history
+[app-name=Screenshot]
+anchor=bottom-right
+width=300
+height=300
+icon-location=top
+max-icon-size=260
+icon-border-radius=12
+format=<b>%s</b>
+on-notify=none
+
 # Alerts: stay until dismissed
 [urgency=critical]
 default-timeout=0
