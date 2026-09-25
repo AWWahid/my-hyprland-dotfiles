@@ -1,7 +1,7 @@
 --- @since 26.8.15
 -- File-explorer behaviour on top of yazi: the Quick Access start folder (built by
 -- quick-access.sh), a Trash-aware Delete, the right-click menu and a Finder-style status bar.
--- Entry: `plugin explorer -- open|openwith|delete|up|menu|home`; also previews the Trash entry.
+-- Entry: `plugin explorer -- open|openwith|delete|up|menu|home|copy|cut|paste`; also previews the Trash entry.
 
 local M = {}
 
@@ -191,6 +191,41 @@ function M.home()
 	ya.emit("cd", { Url(QA) }) -- the cd hook rebuilds it
 end
 
+-- Copy/Cut also put the files on the system clipboard, so the clipboard always holds the newest copy:
+-- a screenshot taken afterwards replaces them there, and Paste then saves the image instead
+local function yank(w, cut)
+	ya.emit("yank", { cut = cut })
+	local uris = {}
+	for _, u in ipairs(w.urls) do
+		uris[#uris + 1] = "file://" .. u:gsub("[^%w/%-._~]", function(c) return string.format("%%%02X", c:byte()) end)
+	end
+	if #uris > 0 then
+		Command("wl-copy"):arg({ "--type", "text/uri-list", table.concat(uris, "\r\n") }):stdout(Command.NULL):stderr(Command.NULL):status()
+	end
+end
+
+function M.copy(w) yank(w, false) end
+function M.cut(w) yank(w, true) end
+
+function M.paste(w)
+	local types = not w.trash and Command("wl-paste"):arg({ "--list-types" }):stdout(Command.PIPED):stderr(Command.NULL):output()
+	if not (types and types.status.success and types.stdout:find("image/png", 1, true)) then
+		return ya.emit("paste", {})
+	end
+	local base = w.cwd .. "/Screenshot " .. os.date("%Y-%m-%d %H-%M-%S")
+	local path, n = base .. ".png", 1
+	while fs.cha(Url(path)) do
+		n = n + 1
+		path = base .. " (" .. n .. ").png"
+	end
+	local out = Command("sh"):arg({ "-c", 'wl-paste --type image/png > "$1"', "sh", path }):stderr(Command.PIPED):output()
+	if not (out and out.status.success) then
+		return notify("Couldn't save the image: " .. tostring(out and out.stderr or "wl-paste failed"), "error")
+	end
+	ya.emit("unyank", {})
+	ya.emit("reveal", { Url(path) })
+end
+
 function M.menu(w)
 	local items
 	if w.qa then
@@ -220,9 +255,9 @@ function M.menu(w)
 			{ on = "o", desc = "Open", run = function() M.open(w) end },
 			{ on = "w", desc = "Open with…", run = function() M.openwith(w) end },
 			{ on = "r", desc = "Rename", run = function() ya.emit("rename", { cursor = "before_ext" }) end },
-			{ on = "c", desc = "Copy", run = function() ya.emit("yank", {}) end },
-			{ on = "x", desc = "Cut", run = function() ya.emit("yank", { cut = true }) end },
-			{ on = "v", desc = "Paste", run = function() ya.emit("paste", {}) end },
+			{ on = "c", desc = "Copy", run = function() M.copy(w) end },
+			{ on = "x", desc = "Cut", run = function() M.cut(w) end },
+			{ on = "v", desc = "Paste", run = function() M.paste(w) end },
 			{ on = "n", desc = "New folder", run = function() ya.emit("create", { dir = true }) end },
 			{ on = "d", desc = "Move to Trash", run = function() M.delete(w) end },
 			{ on = "i", desc = "Properties", run = function() ya.emit("spot", {}) end },
@@ -302,6 +337,9 @@ end
 
 -- setup() runs in the UI; actions run in a separate plugin runtime without Status or Header
 function M:setup()
+	-- SUPER+V's Clear clipboard (`ya pub-to 0 clipboard-clear --json null`) also forgets files copied here
+	ps.sub_remote("clipboard-clear", function() ya.emit("unyank", {}) end)
+
 	-- The location bar names places instead of showing their paths
 	local header_cwd = Header.cwd
 	function Header:cwd()

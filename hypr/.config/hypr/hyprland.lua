@@ -61,8 +61,8 @@ hl.on("hyprland.shutdown", function ()
 end)
 
 hl.on("hyprland.start", function ()
-    -- Clipboard history via cliphist (text and images; also keeps copies alive after the source app closes)
-    hl.exec_cmd("wl-paste --watch cliphist store")
+    -- Clipboard history via cliphist (text and images, newest 100; SUPER+V picks one back)
+    hl.exec_cmd("wl-paste --watch cliphist -max-items 100 store")
     hl.exec_cmd("waybar")
     hl.exec_cmd("hyprpaper")
     hl.exec_cmd("hypridle")
@@ -290,7 +290,7 @@ local closeWindowBind = hl.bind(mainMod .. " + C", hl.dsp.window.close())
 hl.bind(mainMod .. " + M", hl.dsp.exec_cmd("command -v hyprshutdown >/dev/null 2>&1 && hyprshutdown || hyprctl dispatch 'hl.dsp.exit()'"))
 hl.bind(mainMod .. " + E", hl.dsp.exec_cmd(fileManager))
 hl.bind(mainMod .. " + SHIFT + V", hl.dsp.window.float({ action = "toggle" }))
-hl.bind(mainMod .. " + V", hl.dsp.exec_cmd("cliphist list | fuzzel --dmenu | cliphist decode | wl-copy"))  -- clipboard history
+hl.bind(mainMod .. " + V", hl.dsp.exec_cmd("~/.config/hypr/scripts/clipboard.sh"))  -- clipboard history; first item clears it
 hl.bind(mainMod .. " + R", hl.dsp.exec_cmd(menu))
 hl.bind(mainMod .. " + P", hl.dsp.window.pseudo())
 hl.bind(mainMod .. " + J", hl.dsp.layout("togglesplit"))    -- dwindle only

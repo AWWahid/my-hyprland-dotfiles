@@ -33,16 +33,16 @@ desc = "Move to Trash (delete permanently inside Trash)"
 
 [[mgr.prepend_keymap]]
 on = "<C-c>"
-run = "yank"
+run = "plugin explorer -- copy"
 desc = "Copy"
 [[mgr.prepend_keymap]]
 on = "<C-x>"
-run = "yank --cut"
+run = "plugin explorer -- cut"
 desc = "Cut"
 [[mgr.prepend_keymap]]
 on = "<C-v>"
-run = "paste"
-desc = "Paste (never overwrites: clashing names get a suffix)"
+run = "plugin explorer -- paste"
+desc = "Paste files, or a copied image as a new PNG (never overwrites: clashing names get a suffix)"
 [[mgr.prepend_keymap]]
 on = "<F2>"
 run = "rename --cursor=before_ext"
