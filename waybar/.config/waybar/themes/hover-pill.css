@@ -16,6 +16,7 @@
 #pulseaudio:hover,
 #battery:hover,
 #clock:hover,
+#custom-recording:hover,
 #custom-power:hover {
     background: alpha(@fg, 0.12);
     border-radius: 8px;

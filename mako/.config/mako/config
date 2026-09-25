@@ -45,6 +45,17 @@ icon-border-radius=12
 format=<b>%s</b>
 on-notify=none
 
+# Screen recordings: the same thumbnail, click to play
+[app-name=Recording]
+anchor=bottom-right
+width=300
+height=300
+icon-location=top
+max-icon-size=260
+icon-border-radius=12
+format=<b>%s</b>
+on-notify=none
+
 # Alerts: stay until dismissed
 [urgency=critical]
 default-timeout=0

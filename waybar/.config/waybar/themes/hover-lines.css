@@ -15,6 +15,7 @@
 #pulseaudio:hover,
 #battery:hover,
 #clock:hover,
+#custom-recording:hover,
 #custom-power:hover {
     background-image: linear-gradient(alpha(@fg, 0.5), alpha(@fg, 0.5)), linear-gradient(alpha(@fg, 0.5), alpha(@fg, 0.5));
     background-size: 1px 50%;

@@ -10,6 +10,7 @@
         "group/dock"
     ],
     "modules-right": [
+        "custom/recording",
         "group/traydrawer",
         "network",
         "pulseaudio",
@@ -185,6 +186,13 @@
             "transition-duration": 200,
             "children-class": "drawer-child"
         }
+    },
+    "custom/recording": {
+        "exec": "~/.config/hypr/scripts/record.sh status",
+        "return-type": "json",
+        "interval": "once",
+        "signal": 10,
+        "on-click": "~/.config/hypr/scripts/record.sh stop"
     },
     "custom/nightshift": {
         "exec": "~/.config/hypr/scripts/nightshift.sh",

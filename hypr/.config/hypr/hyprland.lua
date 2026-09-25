@@ -304,6 +304,8 @@ local shot = "~/.config/hypr/scripts/screenshot.sh"
 hl.bind("Print",                   hl.dsp.exec_cmd(shot .. " region"))
 hl.bind("SHIFT + Print",           hl.dsp.exec_cmd(shot .. " screen"))
 hl.bind("ALT + Print",             hl.dsp.exec_cmd(shot .. " window"))
+-- Screen recording: menu, or stop when recording (waybar's red dot stops it too)
+hl.bind("CTRL + Print",            hl.dsp.exec_cmd("~/.config/hypr/scripts/record.sh"))
 
 -- Move focus with mainMod + arrow keys
 hl.bind(mainMod .. " + left",  hl.dsp.focus({ direction = "left" }))

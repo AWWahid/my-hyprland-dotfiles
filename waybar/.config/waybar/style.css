@@ -50,6 +50,7 @@ window#waybar {
 #network,
 #bluetooth,
 #custom-nightshift,
+#custom-recording,
 #custom-notifications {
     font-family: "Material Symbols Filled";
     font-size: 27px;
@@ -86,6 +87,7 @@ window#waybar {
 #custom-notepad,
 #custom-obsidian,
 #custom-activity,
+#custom-recording,
 #custom-notifications {
     padding: 0 6px;
 }
@@ -110,6 +112,11 @@ window#waybar {
 #bluetooth.off,
 #custom-nightshift.off {
     color: @muted;
+}
+
+/* recording dot: shown only while record.sh records */
+#custom-recording {
+    color: #ff3b30;
 }
 
 /* notification slot: bell, bell with dot when the centre has entries, accent moon for Do Not Disturb */
