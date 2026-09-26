@@ -1,0 +1,5 @@
+# Let the video group write the Intel iGPU's max and boost clocks, so the waybar battery
+# menu (hypr/scripts/power-mode.sh) can cap the GPU without sudo, as tmpfiles/ does for
+# the CPU knobs. A udev rule rather than tmpfiles because i915 is not in the initrd and
+# can load after systemd-tmpfiles-setup has already run; this fires whenever the card appears.
+SUBSYSTEM=="drm", KERNEL=="card[0-9]*", DRIVERS=="i915", ACTION=="add", RUN+="/bin/sh -c 'chgrp video /sys%p/gt_max_freq_mhz /sys%p/gt_boost_freq_mhz && chmod g+w /sys%p/gt_max_freq_mhz /sys%p/gt_boost_freq_mhz'"
