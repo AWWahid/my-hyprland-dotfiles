@@ -3,6 +3,7 @@
 @import "icons.css";
 @import "bar.css";
 @import "hover.css";
+@import "apps.css";
 
 * {
     font-family: Inter;
@@ -36,7 +37,19 @@ window#waybar {
 }
 
 /* all icons: one font size so Material Symbols' shared 24px grid keeps them optically equal.
-   27px glyph + 6px padding each side = 39px hit target; padding is the gap, so there is no dead zone */
+   27px glyph + 6px padding each side = 39px hit target; padding is the gap, so there is no dead zone.
+   The dock's font (apps.css) is built from Material Symbols on the same grid; it is imported
+   first, so the dock stays out of this rule's font-family */
+#custom-power,
+#custom-expand,
+#network,
+#bluetooth,
+#custom-nightshift,
+#custom-recording,
+#custom-notifications {
+    font-family: "Material Symbols Filled";
+}
+
 #custom-power,
 #custom-expand,
 #custom-launcher,
@@ -53,7 +66,6 @@ window#waybar {
 #custom-nightshift,
 #custom-recording,
 #custom-notifications {
-    font-family: "Material Symbols Filled";
     font-size: 27px;
     color: @icon;
 }
@@ -63,7 +75,7 @@ window#waybar {
     background: alpha(@accent, 0.15);
 }
 
-/* icon colour (icons.css) and hover style (hover.css) are themes/ variants picked in the personalize panel;
+/* icon colour (icons.css), hover style (hover.css) and dock icon set (apps.css) are themes/ variants picked in the personalize panel;
    every hover-*.css lists the clickable modules, so a new clickable module goes in all four */
 
 #workspaces button {
@@ -176,11 +188,6 @@ window#waybar {
 #custom-activity {
     font-size: 33px;
     padding: 0 9px;
-}
-
-/* the Obsidian gem is not in Material Symbols; DotfilesIcons.ttf carries it at U+F8F1 */
-#custom-obsidian {
-    font-family: "Dotfiles Icons";
 }
 
 /* breathing room between power and the workspace numbers */

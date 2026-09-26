@@ -1,0 +1,12 @@
+/* dock app icons: DotfilesIconsFilled.ttf (build-icons-font); both sets share codepoints, so the family picks the set */
+#custom-launcher,
+#custom-files,
+#custom-terminal,
+#custom-firefox,
+#custom-downloads,
+#custom-zed,
+#custom-notepad,
+#custom-obsidian,
+#custom-activity {
+    font-family: "Dotfiles Icons Filled";
+}

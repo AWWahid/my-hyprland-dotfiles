@@ -1,0 +1,28 @@
+#!/usr/bin/env bash
+# Install "Material Symbols Filled": Google's variable Material Symbols pinned to FILL=1,
+# weight 400, 24px optical size, as a plain static font (waybar can't set font axes).
+# Latest from google/material-design-icons; fontTools runs from a throwaway venv.
+# Usage: build-material-font [dir]   (default ~/.local/share/fonts)
+set -euo pipefail
+
+dir="${1:-$HOME/.local/share/fonts}"
+tmp=$(mktemp -d); trap 'rm -rf "$tmp"' EXIT
+B=https://raw.githubusercontent.com/google/material-design-icons/master/variablefont
+
+curl -fsSLo "$tmp/var.ttf" "$B/MaterialSymbolsOutlined%5BFILL,GRAD,opsz,wght%5D.ttf"
+python3 -m venv "$tmp/ft"
+"$tmp/ft/bin/pip" -q install fonttools
+"$tmp/ft/bin/fonttools" varLib.instancer "$tmp/var.ttf" FILL=1 GRAD=0 opsz=24 wght=400 -o "$tmp/static.ttf"
+# New family name, so it can sit beside an installed variable Material Symbols without clashing
+"$tmp/ft/bin/python" - "$tmp/static.ttf" "$dir/MaterialSymbolsFilled.ttf" <<'PY'
+import sys
+from fontTools.ttLib import TTFont
+f = TTFont(sys.argv[1]); n = f["name"]
+for i in (1, 2, 3, 4, 6, 16, 17): n.removeNames(nameID=i)
+for i, v in ((1, "Material Symbols Filled"), (2, "Regular"), (3, "MaterialSymbolsFilled"),
+             (4, "Material Symbols Filled"), (6, "MaterialSymbolsFilled-Regular")):
+    n.setName(v, i, 3, 1, 0x409)
+f.save(sys.argv[2])
+PY
+fc-cache -f "$dir"
+echo "wrote $dir/MaterialSymbolsFilled.ttf"

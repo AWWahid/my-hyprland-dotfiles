@@ -51,6 +51,7 @@ struct State {
     accent_light: String,
     icons_accent: bool,
     bar_solid: bool,
+    apps_filled: bool,
     hover: String,
     wallpaper: Option<PathBuf>,
 }
@@ -66,6 +67,7 @@ impl State {
             accent_light: get("light").unwrap_or("#0077b3".into()),
             icons_accent: fs::read_link(cfg("waybar/icons.css")).is_ok_and(|t| t.to_string_lossy().contains("accent")),
             bar_solid: fs::read_link(cfg("waybar/bar.css")).is_ok_and(|t| t.to_string_lossy().contains("solid")),
+            apps_filled: fs::read_link(cfg("waybar/apps.css")).is_ok_and(|t| t.to_string_lossy().contains("filled")),
             // themes/hover-<style>.css
             hover: fs::read_link(cfg("waybar/hover.css")).ok()
                 .and_then(|t| t.file_stem()?.to_str()?.strip_prefix("hover-").map(String::from))
@@ -87,7 +89,7 @@ impl State {
     }
 }
 
-enum Op { Mode(bool), Wallpaper(PathBuf, Option<PathBuf>), Refit(PathBuf), FromWallpaper(Option<PathBuf>), Manual(String), Icons(bool), Bar(bool), Hover(&'static str) }
+enum Op { Mode(bool), Wallpaper(PathBuf, Option<PathBuf>), Refit(PathBuf), FromWallpaper(Option<PathBuf>), Manual(String), Icons(bool), Apps(bool), Bar(bool), Hover(&'static str) }
 
 /// Sets both accents from the image, each from its own matugen run with that mode's fallback
 /// (white for dark, black for light); false (accents untouched) if matugen fails.
@@ -177,6 +179,7 @@ fn run(op: Op, mut s: State) {
     match op {
         Op::Mode(dark) => theme(if dark { "dark" } else { "light" }),
         Op::Icons(accent) => waybar_link("icons.css", if accent { "themes/icons-accent.css" } else { "themes/icons-mono.css" }),
+        Op::Apps(filled) => waybar_link("apps.css", if filled { "themes/apps-filled.css" } else { "themes/apps-outline.css" }),
         Op::Hover(style) => waybar_link("hover.css", &format!("themes/hover-{style}.css")),
         Op::Bar(solid) => waybar_link("bar.css", if solid { "themes/bar-solid.css" } else { "themes/bar-translucent.css" }),
         Op::Manual(hex) => {
@@ -530,6 +533,8 @@ fn appearance(ctx: &Rc<Ctx>, s: &State, pane: &gtk::Box) {
     card.append(&gtk::Separator::new(gtk::Orientation::Horizontal));
 
     card.append(&row("Menu bar icons", &segmented(ctx, &[("Accent", true), ("Mono", false)], s.icons_accent, Op::Icons)));
+    card.append(&gtk::Separator::new(gtk::Orientation::Horizontal));
+    card.append(&row("App icons", &segmented(ctx, &[("Outline", false), ("Filled", true)], s.apps_filled, Op::Apps)));
     card.append(&gtk::Separator::new(gtk::Orientation::Horizontal));
     card.append(&row("Menu bar background", &segmented(ctx, &[("Solid", true), ("Translucent", false)], s.bar_solid, Op::Bar)));
     card.append(&gtk::Separator::new(gtk::Orientation::Horizontal));
