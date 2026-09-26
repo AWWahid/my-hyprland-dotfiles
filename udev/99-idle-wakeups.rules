@@ -1,0 +1,6 @@
+# Two sources of idle CPU wakeups that do nothing useful here (seen in powertop).
+# The Wi-Fi driver blinks an activity LED on traffic (~6/s); drive none, not visible on this laptop.
+SUBSYSTEM=="leds", KERNEL=="rtw88-*", ACTION=="add", ATTR{trigger}="none"
+# The kernel's hwrng thread keeps reading the TPM to feed the random pool (~8/s). The CPU's own
+# RDSEED/RDRAND already seed it, so stop the thread; the TPM stays usable directly via /dev/tpm*.
+SUBSYSTEM=="misc", KERNEL=="hw_random", ACTION=="add", ATTR{rng_current}="none"
