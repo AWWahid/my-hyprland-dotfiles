@@ -25,6 +25,8 @@ fn source_link() -> PathBuf { wallpaper_dir().join("source") }
 /// Not in ~/.cache: hyprpaper needs the copy at login, so a cache cleaner must not remove it
 fn scaled_dir() -> PathBuf { wallpaper_dir().join("scaled") }
 /// Holds the folder the panel opens in, set with Make default
+/// Read by hyprland.lua at load
+fn gaps_file() -> PathBuf { home().join(".local/state/hypr-gaps") }
 fn folder_file() -> PathBuf { home().join(".local/state/personalize/wallpaper-folder") }
 fn default_folder() -> PathBuf {
     fs::read_to_string(folder_file()).ok().map(|p| PathBuf::from(p.trim())).filter(|p| p.is_dir())
@@ -53,6 +55,7 @@ struct State {
     bar_solid: bool,
     apps_filled: bool,
     hover: String,
+    wide_gaps: bool,
     wallpaper: Option<PathBuf>,
 }
 
@@ -72,6 +75,7 @@ impl State {
             hover: fs::read_link(cfg("waybar/hover.css")).ok()
                 .and_then(|t| t.file_stem()?.to_str()?.strip_prefix("hover-").map(String::from))
                 .unwrap_or("pill".into()),
+            wide_gaps: fs::read_to_string(gaps_file()).is_ok_and(|g| g.trim() == "wide"),
             // Falls back to `current` for a wallpaper set before `source` existed
             wallpaper: fs::canonicalize(source_link()).ok()
                 .or_else(|| fs::canonicalize(wallpaper_link()).ok().filter(|p| !p.starts_with(scaled_dir()))),
@@ -89,7 +93,7 @@ impl State {
     }
 }
 
-enum Op { Mode(bool), Wallpaper(PathBuf, Option<PathBuf>), Refit(PathBuf), FromWallpaper(Option<PathBuf>), Manual(String), Icons(bool), Apps(bool), Bar(bool), Hover(&'static str) }
+enum Op { Mode(bool), Wallpaper(PathBuf, Option<PathBuf>), Refit(PathBuf), FromWallpaper(Option<PathBuf>), Manual(String), Icons(bool), Apps(bool), Bar(bool), Hover(&'static str), Gaps(bool) }
 
 /// Sets both accents from the image, each from its own matugen run with that mode's fallback
 /// (white for dark, black for light); false (accents untouched) if matugen fails.
@@ -182,6 +186,10 @@ fn run(op: Op, mut s: State) {
         Op::Apps(filled) => waybar_link("apps.css", if filled { "themes/apps-filled.css" } else { "themes/apps-outline.css" }),
         Op::Hover(style) => waybar_link("hover.css", &format!("themes/hover-{style}.css")),
         Op::Bar(solid) => waybar_link("bar.css", if solid { "themes/bar-solid.css" } else { "themes/bar-translucent.css" }),
+        Op::Gaps(wide) => {
+            let _ = fs::write(gaps_file(), if wide { "wide\n" } else { "thin\n" });
+            let _ = Command::new("hyprctl").arg("reload").status();
+        }
         Op::Manual(hex) => {
             s.from_wallpaper = false;
             if s.dark { s.accent_dark = hex } else { s.accent_light = hex }
@@ -541,6 +549,8 @@ fn appearance(ctx: &Rc<Ctx>, s: &State, pane: &gtk::Box) {
     let hovers = [("Color", "color"), ("Pill", "pill"), ("Underline", "underline"), ("Lines", "lines")];
     let current = hovers.iter().map(|&(_, v)| v).find(|v| *v == s.hover).unwrap_or("pill");
     card.append(&row("Menu bar hover", &segmented(ctx, &hovers, current, Op::Hover)));
+    card.append(&gtk::Separator::new(gtk::Orientation::Horizontal));
+    card.append(&row("Window gaps", &segmented(ctx, &[("Thin", false), ("Resizable", true)], s.wide_gaps, Op::Gaps)));
     pane.append(&card);
 }
 

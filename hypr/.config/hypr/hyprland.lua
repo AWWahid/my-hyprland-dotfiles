@@ -119,10 +119,18 @@ local function savedLayout()
     return layout == "master" and "master" or "dwindle"
 end
 
+-- Window gaps from personalize (SUPER+W): "wide" leaves room to grab the edge between tiles
+local function savedGaps()
+    local f = io.open(os.getenv("HOME") .. "/.local/state/hypr-gaps")
+    local gaps = f and f:read("l")
+    if f then f:close() end
+    return gaps == "wide" and 4 or 1
+end
+
 -- Refer to https://wiki.hypr.land/Configuring/Basics/Variables/
 hl.config({
     general = {
-        gaps_in  = 1,
+        gaps_in  = savedGaps(),   -- per side, so the space between two tiles is double
         gaps_out = 0,
 
         border_size = 0,
