@@ -178,6 +178,7 @@
             "custom/expand",
             "bluetooth",
             "custom/nightshift",
+            "custom/vpn",
             "tray"
         ],
         "drawer": {
@@ -202,6 +203,13 @@
         "on-click": "~/.config/hypr/scripts/nightshift.sh toggle",
         "on-scroll-up": "~/.config/hypr/scripts/nightshift.sh warmer",
         "on-scroll-down": "~/.config/hypr/scripts/nightshift.sh cooler"
+    },
+    "custom/vpn": {
+        "exec": "~/.config/hypr/scripts/vpn-menu.sh status",
+        "return-type": "json",
+        "interval": "once",
+        "signal": 11,
+        "on-click": "pkill -x fuzzel || ~/.config/hypr/scripts/vpn-menu.sh"
     },
     "custom/expand": {
         "format": "\ue5cb",

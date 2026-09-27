@@ -68,6 +68,8 @@ hl.on("hyprland.start", function ()
     hl.exec_cmd("hypridle")
     -- CPU power knobs as last chosen from the waybar battery menu (TLP sets them at boot)
     hl.exec_cmd("~/.config/hypr/scripts/power-mode.sh apply")
+    -- VPN as last picked from the waybar chevron (none unless one was left on)
+    hl.exec_cmd("~/.config/hypr/scripts/vpn-menu.sh apply")
 end)
 
 

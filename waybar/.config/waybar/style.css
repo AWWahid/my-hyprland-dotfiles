@@ -45,6 +45,7 @@ window#waybar {
 #network,
 #bluetooth,
 #custom-nightshift,
+#custom-vpn,
 #custom-recording,
 #custom-notifications {
     font-family: "Material Symbols Filled";
@@ -64,6 +65,7 @@ window#waybar {
 #network,
 #bluetooth,
 #custom-nightshift,
+#custom-vpn,
 #custom-recording,
 #custom-notifications {
     font-size: 27px;
@@ -88,6 +90,7 @@ window#waybar {
 #network,
 #bluetooth,
 #custom-nightshift,
+#custom-vpn,
 #battery,
 #custom-expand,
 #custom-power,
@@ -123,7 +126,8 @@ window#waybar {
 #network.disconnected,
 #network.disabled,
 #bluetooth.off,
-#custom-nightshift.off {
+#custom-nightshift.off,
+#custom-vpn.off {
     color: @muted;
 }
 
