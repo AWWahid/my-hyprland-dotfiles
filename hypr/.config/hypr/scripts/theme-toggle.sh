@@ -38,6 +38,16 @@ r=$((16#${accent:0:2})) g=$((16#${accent:2:2})) b=$((16#${accent:4:2}))
 (( r * 299 + g * 587 + b * 114 > 150000 )) && on_accent='#000000' || on_accent='#ffffff'
 
 echo "@define-color accent #$accent;" > $cfg/waybar/accent.css
+# Hyprland group tabs (hyprland.lua loads this; a reload is needed, the tab fills are cached)
+# Like waybar's active workspace: accent pill with the window color as text; inactive tabs are window backgrounds (0.85, d9)
+[ $mode = dark ] && { bg=000000; fg=e6e6e6; } || { bg=ffffff; fg=1a1a1a; }
+cat > $cfg/hypr/colors.lua <<EOF
+hl.config({ group = { groupbar = {
+    col = { active = "rgb($accent)", inactive = "rgba(${bg}d9)", locked_active = "rgb($accent)", locked_inactive = "rgba(${bg}d9)" },
+    text_color = "rgb($bg)", text_color_inactive = "rgb($fg)",
+} } })
+EOF
+hyprctl reload >/dev/null
 # Kitty: accent in palette slot 16 (the bash prompt's user@host), so open terminals follow it on reload.
 # rm first: this used to be a symlink into themes/, and writing through it would overwrite the theme.
 rm -f $cfg/kitty/colors.conf
