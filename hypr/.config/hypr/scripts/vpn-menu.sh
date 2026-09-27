@@ -13,7 +13,16 @@ state="${XDG_STATE_HOME:-$HOME/.local/state}/vpn"
 
 notify() { notify-send -a "VPN" "$@"; }
 pick() { fuzzel --dmenu --index --hide-prompt "$@"; }
-refresh() { pkill -RTMIN+11 waybar; }
+# Signal only a waybar that already handles RTMIN+11: at login `apply` races its
+# startup, and an unhandled real-time signal kills it. One not ready yet runs
+# `status` itself when its modules start, so skipping it loses nothing.
+refresh() {
+    local bit=$(( 1 << ($(kill -l RTMIN) + 10) )) pid cgt
+    for pid in $(pgrep -x waybar); do
+        cgt=$(awk '/^SigCgt/{print $2}' "/proc/$pid/status" 2>/dev/null) || continue
+        (( 0x${cgt:-0} & bit )) && kill -s RTMIN+11 "$pid"
+    done
+}
 save() { mkdir -p "${state%/*}"; echo "$1" >"$state"; }
 
 vpns() { nmcli -t -f NAME,TYPE connection show | awk -F: '$2 == "wireguard" { print $1 }' | sort; }
