@@ -9,6 +9,12 @@ if ! bluetoothctl show >/dev/null 2>&1 || bluetoothctl show | grep -q 'No defaul
     exit 1
 fi
 
+# BlueZ can keep reporting "Powered: yes" while the controller itself is off (PowerState),
+# and then every scan and pair fails. A power cycle brings the two back in line.
+if bluetoothctl show | grep -q 'Powered: yes' && ! bluetoothctl show | grep -q 'PowerState: on'; then
+    bluetoothctl power off >/dev/null; bluetoothctl power on >/dev/null
+fi
+
 if ! bluetoothctl show | grep -q 'Powered: yes'; then
     if [ "$(printf '  Turn Bluetooth on\n' | pick --lines 1)" = 0 ]; then
         bluetoothctl power on >/dev/null && exec "$0"
@@ -32,6 +38,26 @@ gatt_battery() {
         timeout 3 busctl call org.bluez "$char" org.bluez.GattCharacteristic1 ReadValue 'a{sv}' 0 2>/dev/null | awk '{print $3}'
         return
     done
+}
+
+# Pairs within one bluetoothctl session: the agent stays the default for the whole exchange
+# and the device is freshly scanned first. One-shot `bluetoothctl --agent X pair` fails with
+# AuthenticationFailed on BLE mice. Prints BlueZ's error on failure.
+pair_device() {
+    local mac=$1 line result="" end=$((SECONDS + 30))
+    coproc BT { bluetoothctl 2>&1; }
+    printf 'agent NoInputNoOutput\ndefault-agent\nscan on\n' >&"${BT[1]}"
+    sleep 6
+    printf 'scan off\npair %s\n' "$mac" >&"${BT[1]}"
+    while [ $SECONDS -lt $end ] && IFS= read -r -t 30 line <&"${BT[0]}"; do
+        line=$(sed 's/\x1b\[[0-9;]*[a-zA-Z]//g' <<<"$line")
+        case $line in
+            *"Pairing successful"*) result=ok; break ;;
+            *"Failed to pair"*) result=${line##*Failed to pair: }; break ;;
+        esac
+    done
+    kill "$BT_PID" 2>/dev/null
+    [ "$result" = ok ] || { echo "${result:-No answer from the device}"; return 1; }
 }
 
 labels=("  Scan for devices" "  Turn Bluetooth off")
@@ -72,12 +98,13 @@ case "${actions[idx]}" in
     connect)    if bluetoothctl connect "$mac" >/dev/null; then notify "Connected" "$name"; else notify "Could not connect" "$name"; fi ;;
     pair)
         # Trusted devices reconnect automatically whenever Bluetooth is on
-        if bluetoothctl --agent NoInputNoOutput pair "$mac" >/dev/null &&
-           bluetoothctl trust "$mac" >/dev/null &&
-           bluetoothctl connect "$mac" >/dev/null; then
+        notify "Pairing…" "$name"
+        if ! err=$(pair_device "$mac"); then
+            notify "Pairing failed" "$name: ${err#org.bluez.Error.}. Put it in pairing mode and try again."
+        elif bluetoothctl trust "$mac" >/dev/null && bluetoothctl connect "$mac" >/dev/null; then
             notify "Paired and connected" "$name"
         else
-            notify "Pairing failed" "$name"
+            notify "Paired, but could not connect" "$name"
         fi
         ;;
 esac
