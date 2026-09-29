@@ -130,7 +130,7 @@ run = "plugin explorer -- home"
 desc = "Quick Access"
 [[mgr.prepend_keymap]]
 on = "<C-l>"
-run = "cd --interactive"
+run = "plugin explorer -- go"
 desc = "Type a location"
 
 [[mgr.prepend_keymap]]
@@ -170,3 +170,18 @@ desc = "Actions menu"
 on = "M"
 run = "plugin mount"
 desc = "Drives"
+
+# Text boxes (location, rename, search...): GUI-style select all, copy and paste through the system
+# clipboard; Esc cancels. Paste over a selection replaces it
+[[input.prepend_keymap]]
+on = "<C-a>"
+run = ["move eol", "visual", "move bol"]
+desc = "Select all"
+[[input.prepend_keymap]]
+on = "<C-c>"
+run = ["yank", "insert"]
+desc = "Copy"
+[[input.prepend_keymap]]
+on = "<C-v>"
+run = ["delete --insert", "paste --before"]
+desc = "Paste"

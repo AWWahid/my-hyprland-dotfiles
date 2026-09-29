@@ -364,21 +364,70 @@ local function space(self)
 	return ui.Line((free[tostring(self._current.cwd)] or "") .. " ")
 end
 
+-- Location box (click the header, Ctrl+L): the real path, selectable to copy; a pasted folder opens,
+-- a pasted file is highlighted in its folder rather than opened
+function M.go(w)
+	local value = w.cwd:find("^%a+://") and HOME or w.cwd
+	local path, event = ya.input { title = "Location:", value = value, pos = { "top-center", y = 2, w = 80 } }
+	if event ~= 1 then
+		return
+	end
+	path = path:gsub("^%s+", ""):gsub("%s+$", ""):gsub("^file://", "")
+	path = path:gsub("^~", HOME):gsub("%$HOME", HOME):gsub("%${HOME}", HOME)
+	if path == "" then
+		return
+	elseif path:sub(1, 1) ~= "/" then
+		path = w.cwd .. "/" .. path
+	end
+	local cha = fs.cha(Url(path))
+	if not cha then
+		return notify("No such file or folder: " .. path)
+	end
+	ya.emit(cha.is_dir and "cd" or "reveal", { Url(path) })
+end
+
 -- setup() runs in the UI; actions run in a separate plugin runtime without Status or Header
 function M:setup()
 	-- SUPER+V's Clear clipboard (`ya pub-to 0 clipboard-clear --json null`) also forgets files copied here
 	ps.sub_remote("clipboard-clear", function() ya.emit("unyank", {}) end)
 
-	-- The location bar names places instead of showing their paths
-	local header_cwd = Header.cwd
+	-- The address bar: the real path in a rounded accent box across the top; Quick Access and Trash
+	-- keep their names, their paths mean nothing. Clicking it opens the Location box
 	function Header:cwd()
-		local cwd = tostring(self._current.cwd)
-		if cwd == QA then
-			return ui.Span("Quick Access"):style(th.mgr.cwd)
-		elseif cwd:find("^trash://") then
-			return ui.Span("Trash"):style(th.mgr.cwd)
+		local max = self._area.w - self._right_width - 4
+		if max <= 0 then
+			return ""
 		end
-		return header_cwd(self)
+		local cwd = tostring(self._current.cwd)
+		local s = cwd == QA and "Quick Access" or cwd:find("^trash://") and "Trash" or ya.readable_path(cwd)
+		return ui.Span(ui.truncate(s .. self:flags(), { max = max, rtl = true }))
+	end
+	function Header:redraw()
+		local inner = ui.Rect { x = self._area.x + 2, y = self._area.y + 1, w = self._area.w - 4, h = 1 }
+		local box = ui.Rect { x = self._area.x, y = self._area.y, w = self._area.w, h = 3 }
+		local right = self:children_redraw(self.RIGHT)
+		self._right_width = right:width()
+		return {
+			ui.Border(ui.Edge.ALL):area(box):type(ui.Border.ROUNDED):style(th.mgr.cwd),
+			ui.Line(self:children_redraw(self.LEFT)):area(inner),
+			ui.Line(right):area(inner):align(ui.Align.RIGHT),
+		}
+	end
+	function Root:layout()
+		self._chunks = ui.Layout()
+			:direction(ui.Layout.VERTICAL)
+			:constraints({
+				ui.Constraint.Length(3),
+				ui.Constraint.Length(Tabs.height()),
+				ui.Constraint.Fill(1),
+				ui.Constraint.Length(1),
+			})
+			:split(self._area)
+	end
+	function Header:click(event, up)
+		if not up and event.is_left and event.y < self._area.y + 3 then
+			ya.emit("plugin", { "explorer", "go" })
+		end
 	end
 
 	for id = 1, 6 do -- yazi's own children: mode, length, name | perm, percent, position
