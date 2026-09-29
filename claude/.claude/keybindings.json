@@ -1,0 +1,15 @@
+{
+  "$schema": "https://www.schemastore.org/claude-code-keybindings.json",
+  "$docs": "https://code.claude.com/docs/en/keybindings",
+  "bindings": [
+    {
+      "context": "Scroll",
+      "bindings": {
+        "shift+up": "scroll:lineUp",
+        "shift+down": "scroll:lineDown",
+        "shift+pageup": "scroll:pageUp",
+        "shift+pagedown": "scroll:pageDown"
+      }
+    }
+  ]
+}
