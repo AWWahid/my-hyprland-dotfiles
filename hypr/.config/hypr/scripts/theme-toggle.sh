@@ -121,19 +121,8 @@ selection, *:selected { background-color: alpha(#$accent, 0.3); }
 *:focus-visible { outline-color: alpha(#$accent, 0.5); }
 EOF
 
-# Firefox (not stowed): both modes' accents, since it switches light/dark live from the portal.
-# userChrome.css is read at startup, so a new accent shows after Firefox restarts
-fx=$(dirname "$(readlink -f "$0")")/../../../../firefox/chrome/colors.css
-for m in dark light; do
-    a=$(sed -n "s/^$m=#\\?//p" $cfg/hypr/accent.conf)
-    (( 16#${a:0:2} * 299 + 16#${a:2:2} * 587 + 16#${a:4:2} * 114 > 150000 )) && fg='#000000' || fg='#ffffff'
-    [ $m = dark ] && echo '@media (prefers-color-scheme: dark) {' || echo '@media not (prefers-color-scheme: dark) {'
-    echo "  :root { --sys-accent: #$a !important; --sys-on-accent: $fg !important; }"
-    echo '}'
-done > "$fx"
-
 # Obsidian (not stowed; the snippet lives in the vault, which is its own git repo).
-# Electron follows the portal for light/dark, so like Firefox this carries both modes' colours
+# Electron follows the portal for light/dark, so this carries both modes' colours
 # and no regeneration is needed to switch. Themes are free to hardcode the accent as literal
 # hex (Apple Notes does), so setting --accent-h/s/l alone is not enough: the vars derived from
 # it have to be set too. Backgrounds are the system's own black/white rather than the theme's,
