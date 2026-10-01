@@ -1,0 +1,26 @@
+/* Hover: solid accent highlight, icon in the bar colour, like the active workspace */
+/* #waybar prefix: two ids outrank the per-module colours (battery, power, .off) that come later in style.css */
+#waybar #custom-expand:hover,
+#waybar #custom-launcher:hover,
+#waybar #custom-files:hover,
+#waybar #custom-terminal:hover,
+#waybar #custom-firefox:hover,
+#waybar #custom-downloads:hover,
+#waybar #custom-zed:hover,
+#waybar #custom-notepad:hover,
+#waybar #custom-obsidian:hover,
+#waybar #custom-activity:hover,
+#waybar #network:hover,
+#waybar #bluetooth:hover,
+#waybar #custom-vpn:hover,
+#waybar #custom-nightshift:hover,
+#waybar #custom-notifications:hover,
+#waybar #pulseaudio:hover,
+#waybar #battery:hover,
+#waybar #clock:hover,
+#waybar #custom-recording:hover,
+#waybar #custom-power:hover {
+    color: @bg;
+    background: @accent;
+    border-radius: 8px;
+}

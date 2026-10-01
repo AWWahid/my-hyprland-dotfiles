@@ -546,7 +546,7 @@ fn appearance(ctx: &Rc<Ctx>, s: &State, pane: &gtk::Box) {
     card.append(&gtk::Separator::new(gtk::Orientation::Horizontal));
     card.append(&row("Menu bar background", &segmented(ctx, &[("Solid", true), ("Translucent", false)], s.bar_solid, Op::Bar)));
     card.append(&gtk::Separator::new(gtk::Orientation::Horizontal));
-    let hovers = [("Color", "color"), ("Pill", "pill"), ("Underline", "underline"), ("Lines", "lines")];
+    let hovers = [("Color", "color"), ("Pill", "pill"), ("Underline", "underline"), ("Lines", "lines"), ("Fill", "fill")];
     let current = hovers.iter().map(|&(_, v)| v).find(|v| *v == s.hover).unwrap_or("pill");
     card.append(&row("Menu bar hover", &segmented(ctx, &hovers, current, Op::Hover)));
     card.append(&gtk::Separator::new(gtk::Orientation::Horizontal));
