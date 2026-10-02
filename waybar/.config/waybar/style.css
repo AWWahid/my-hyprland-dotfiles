@@ -124,7 +124,7 @@ window#waybar {
 #pulseaudio,
 #battery,
 #clock {
-    padding: 0 12px;
+    padding: 0 6px;
 }
 
 /* volume and clock follow the bar icon colour like the pure-icon modules (icon and text together,
@@ -145,8 +145,9 @@ window#waybar {
     color: #ff3b30;
 }
 
-/* notification slot: bell, bell with dot when the centre has entries, accent moon for Do Not Disturb */
+/* notification slot (drawn smaller: the bell is taller than the other glyphs): bell, bell with dot when the centre has entries, accent moon for Do Not Disturb */
 #custom-notifications {
+    font-size: 25px;
     margin-right: 6px;
 }
 
@@ -174,19 +175,17 @@ window#waybar {
 }
 
 /* optical corrections: Material glyphs share a grid but not visual weight */
-/* wifi wedge is wide, solid and top-heavy: drawn smaller; its point makes it read low, so it's lifted
-   (negative margin cancels the padding so the bar height doesn't change) */
+/* wifi wedge is wide, solid and top-heavy: drawn smaller */
 #network {
     font-size: 24px;
-    padding-bottom: 2px;
-    margin-top: -2px;
 }
 
-/* chevron and code brackets are thin strokes, drawn larger to match the solid icons */
+/* chevron is a thin stroke, drawn larger to match the solid icons; its glyph sits high, so it's lowered
+   (negative margin cancels the padding so the bar height doesn't change) */
 #custom-expand {
     font-size: 30px;
-    padding-bottom: 2px;
-    margin-top: -2px;
+    padding-top: 1px;
+    margin-bottom: -1px;
 }
 
 /* app launchers are the main targets: bigger glyphs and wider hit areas (33px + 9px each side = 51px) */
@@ -206,4 +205,32 @@ window#waybar {
 /* breathing room between power and the workspace numbers */
 #custom-power {
     margin-right: 6px;
+}
+
+/* right-side spacing: per-module padding evens the visible gaps between glyphs (side bearings differ) */
+#custom-stats {
+    padding-right: 9px;
+}
+
+#network {
+    padding-left: 10px;
+    padding-right: 8px;
+}
+
+#pulseaudio {
+    padding-left: 7px;
+}
+
+#battery {
+    padding-left: 5px;
+    padding-right: 9px;
+}
+
+#clock {
+    padding-left: 9px;
+    padding-right: 8px;
+}
+
+#custom-notifications {
+    padding-left: 8px;
 }
