@@ -15,10 +15,11 @@
 ------------------
 
 -- See https://wiki.hypr.land/Configuring/Basics/Monitors/
+-- 60 Hz on purpose: no gaming here, and preferred could pick a higher rate
 hl.monitor({
-    output   = "",
-    mode     = "preferred",
-    position = "auto",
+    output   = "DP-3",
+    mode     = "1920x1080@60",
+    position = "0x0",
     scale    = 1,
 })
 
@@ -68,8 +69,6 @@ hl.on("hyprland.start", function ()
     hl.exec_cmd("waybar")
     hl.exec_cmd("hyprpaper")
     hl.exec_cmd("hypridle")
-    -- CPU power knobs as last chosen from the waybar battery menu (TLP sets them at boot)
-    hl.exec_cmd("~/.config/hypr/scripts/power-mode.sh apply")
     -- VPN as last picked from the waybar chevron (none unless one was left on)
     hl.exec_cmd("~/.config/hypr/scripts/vpn-menu.sh apply")
 end)
@@ -274,6 +273,12 @@ hl.config({
     misc = {
         force_default_wallpaper = 0,    -- Set to 0 or 1 to disable the anime mascot wallpapers
         disable_hyprland_logo   = true, -- If true disables the random hyprland logo / anime girl background. :(
+    },
+
+    -- No "what's new" window after updates, no donation popups
+    ecosystem = {
+        no_update_news  = true,
+        no_donation_nag = true,
     },
 
     -- Scan out fullscreen video/game windows directly (skips compositing, saves battery)
