@@ -63,6 +63,8 @@ end)
 hl.on("hyprland.start", function ()
     -- Clipboard history via cliphist (text and images, newest 100; SUPER+V picks one back)
     hl.exec_cmd("wl-paste --watch cliphist -max-items 100 store")
+    -- yazi's Copy/Cut is saved to disk to sync windows (session plugin); start each login without it
+    hl.exec_cmd("rm -f \"${XDG_STATE_HOME:-$HOME/.local/state}/yazi/.dds\"")
     hl.exec_cmd("waybar")
     hl.exec_cmd("hyprpaper")
     hl.exec_cmd("hypridle")
