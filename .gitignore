@@ -46,3 +46,5 @@ Cargo.lock
 # Untested hardware workaround, kept local (see the file's header)
 docs/wifi-rtw88-aspm.md
 Original-Laptop-CLAUDE.md
+# Built by build-material-font (fetches the latest); lands here through the stowed fonts link
+fonts/.local/share/fonts/MaterialSymbolsFilled.ttf

@@ -51,7 +51,8 @@ local menu        = "fuzzel"
 
 -- Activate graphical-session.target so systemd user services that require it (xdg-desktop-portal) can start
 hl.on("hyprland.start", function ()
-    hl.exec_cmd("systemctl --user start hyprland-session.target")
+    -- A user manager that outlives a logout keeps the old session ID; the polkit agent must register for this one
+    hl.exec_cmd("systemctl --user import-environment XDG_SESSION_ID && systemctl --user start hyprland-session.target")
     -- GTK apps take the cursor from gsettings, not XCURSOR_THEME (theme-toggle.sh sets cursor-theme)
     hl.exec_cmd("gsettings set org.gnome.desktop.interface cursor-size 32 && gsettings set org.gnome.desktop.interface font-name 'Inter 13.5' && gsettings set org.gnome.desktop.interface monospace-font-name 'Geist Mono 13.5'")
     -- Mousepad as a TextEdit equivalent: Helvetica clone (Nimbus Sans) like TextEdit's default
