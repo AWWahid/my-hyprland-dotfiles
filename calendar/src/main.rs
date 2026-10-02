@@ -3,14 +3,23 @@
 //! Build/install: cargo install --path ~/dotfiles/calendar --root ~/.local
 
 use gtk::{gdk, glib, prelude::*};
-use gtk4_layer_shell::{Edge, KeyboardMode, Layer, LayerShell};
-use std::{cell::Cell, rc::Rc};
+use std::{cell::RefCell, rc::Rc};
 
 // en_US weeks start on Sunday
 const WEEKDAYS: [&str; 7] = ["S", "M", "T", "W", "T", "F", "S"];
 const MONTHS: [&str; 12] = [
-    "January", "February", "March", "April", "May", "June",
-    "July", "August", "September", "October", "November", "December",
+    "January",
+    "February",
+    "March",
+    "April",
+    "May",
+    "June",
+    "July",
+    "August",
+    "September",
+    "October",
+    "November",
+    "December",
 ];
 
 // Colors come from ~/.config/gtk-4.0/gtk.css (theme + accent written by theme-toggle.sh).
@@ -37,62 +46,33 @@ window { background: transparent; }
 .day.today { background: @accent_bg_color; color: @accent_fg_color; font-weight: 700; }
 "#;
 
-fn days_in_month(y: i32, m: i32) -> i32 {
-    match m {
-        2 if (y % 4 == 0 && y % 100 != 0) || y % 400 == 0 => 29,
-        2 => 28,
-        4 | 6 | 9 | 11 => 30,
-        _ => 31,
+// Noon, not midnight: a DST jump at midnight would make that local time not exist
+fn first_of_month(y: i32, m: i32) -> glib::DateTime {
+    glib::DateTime::from_local(y, m, 1, 12, 0, 0.0).expect("valid date")
+}
+
+fn set_class(widget: &impl IsA<gtk::Widget>, class: &str, on: bool) {
+    if on {
+        widget.add_css_class(class);
+    } else {
+        widget.remove_css_class(class);
     }
-}
-
-// 0 = Sunday
-fn weekday_of_first(y: i32, m: i32) -> i32 {
-    let first = glib::DateTime::from_local(y, m, 1, 0, 0, 0.0).unwrap();
-    first.day_of_week() % 7
-}
-
-fn shift(y: i32, m: i32, by: i32) -> (i32, i32) {
-    let i = y * 12 + (m - 1) + by;
-    (i.div_euclid(12), i.rem_euclid(12) + 1)
 }
 
 fn main() {
-    let stamp = std::path::Path::new(&std::env::var("XDG_RUNTIME_DIR").unwrap_or("/tmp".into())).join("calendar-popup.closed");
-    let just_closed = std::fs::metadata(&stamp).and_then(|m| m.modified())
-        .is_ok_and(|t| t.elapsed().is_ok_and(|e| e.as_millis() < 500));
-    if just_closed {
+    let stamp = layer_popup::closed_stamp("calendar-popup");
+    if layer_popup::just_closed(&stamp) {
         return;
     }
+    layer_popup::init();
+    layer_popup::add_css(CSS, gtk::STYLE_PROVIDER_PRIORITY_APPLICATION);
 
-    // Software rendering: a small short-lived popup is cheaper on the CPU than waking the iGPU
-    unsafe { std::env::set_var("GSK_RENDERER", "cairo") };
-    // No accessibility bus on this system; skips a failing D-Bus lookup at startup
-    unsafe { std::env::set_var("GTK_A11Y", "none") };
-    gtk::init().expect("gtk init");
-
-    let provider = gtk::CssProvider::new();
-    provider.load_from_string(CSS);
-    gtk::style_context_add_provider_for_display(
-        &gdk::Display::default().unwrap(),
-        &provider,
-        gtk::STYLE_PROVIDER_PRIORITY_APPLICATION,
-    );
-
-    let now = glib::DateTime::now_local().unwrap();
+    let now = glib::DateTime::now_local().expect("local time");
     let today = (now.year(), now.month(), now.day_of_month());
-    let shown = Rc::new(Cell::new((today.0, today.1)));
+    // First of the month on display
+    let shown = Rc::new(RefCell::new(first_of_month(today.0, today.1)));
 
-    let window = gtk::Window::new();
-    window.init_layer_shell();
-    window.add_css_class("layer-panel");
-    window.set_namespace(Some("calendar"));
-    window.set_layer(Layer::Top);
-    // Cover the screen (minus the bar) so a click outside the panel can close it
-    for edge in [Edge::Top, Edge::Bottom, Edge::Left, Edge::Right] {
-        window.set_anchor(edge, true);
-    }
-    window.set_keyboard_mode(KeyboardMode::OnDemand);
+    let window = layer_popup::window("calendar");
 
     let panel = gtk::Box::new(gtk::Orientation::Vertical, 10);
     panel.add_css_class("panel");
@@ -123,10 +103,10 @@ fn main() {
 
     let grid = gtk::Grid::new();
     grid.set_column_homogeneous(true);
-    for (c, w) in WEEKDAYS.iter().enumerate() {
+    for (c, w) in (0..).zip(WEEKDAYS) {
         let l = gtk::Label::new(Some(w));
         l.add_css_class("weekday");
-        grid.attach(&l, c as i32, 0, 1, 1);
+        grid.attach(&l, c, 0, 1, 1);
     }
     let cells: Vec<gtk::Label> = (0..42)
         .map(|i| {
@@ -142,65 +122,66 @@ fn main() {
     let render = Rc::new({
         let shown = shown.clone();
         move || {
-            let (y, m) = shown.get();
-            title.set_text(&format!("{} {}", MONTHS[m as usize - 1], y));
-            let lead = weekday_of_first(y, m);
-            let (py, pm) = shift(y, m, -1);
-            let prev_len = days_in_month(py, pm);
-            let len = days_in_month(y, m);
-            for (i, cell) in cells.iter().enumerate() {
-                let d = i as i32 - lead + 1;
-                let (text, other, is_today) = if d < 1 {
-                    (prev_len + d, true, false)
-                } else if d > len {
-                    (d - len, true, false)
-                } else {
-                    (d, false, (y, m, d) == today)
-                };
-                cell.set_text(&text.to_string());
-                if other { cell.add_css_class("other") } else { cell.remove_css_class("other") }
-                if is_today { cell.add_css_class("today") } else { cell.remove_css_class("today") }
+            let first = shown.borrow();
+            let (y, m) = (first.year(), first.month());
+            title.set_text(&format!("{} {y}", MONTHS[m as usize - 1]));
+            // Grid starts on the Sunday on or before the 1st (day_of_week: Monday 1 .. Sunday 7)
+            let start = first
+                .add_days(-(first.day_of_week() % 7))
+                .expect("valid date");
+            for (i, cell) in (0..).zip(&cells) {
+                let day = start.add_days(i).expect("valid date");
+                let date = (day.year(), day.month(), day.day_of_month());
+                cell.set_text(&date.2.to_string());
+                set_class(cell, "other", date.1 != m);
+                set_class(cell, "today", date == today);
             }
         }
     });
     render();
 
-    let go = {
-        let (shown, render) = (shown.clone(), render.clone());
-        Rc::new(move |by: i32| {
-            let (y, m) = shown.get();
-            shown.set(if by == 0 { (today.0, today.1) } else { shift(y, m, by) });
-            render();
-        })
-    };
-    prev.connect_clicked({ let go = go.clone(); move |_| go(-1) });
-    next.connect_clicked({ let go = go.clone(); move |_| go(1) });
-    home.connect_clicked({ let go = go.clone(); move |_| go(0) });
+    // Months to move by; 0 jumps back to today's month
+    let go = Rc::new(move |by: i32| {
+        let next = if by == 0 {
+            first_of_month(today.0, today.1)
+        } else {
+            shown.borrow().add_months(by).expect("valid date")
+        };
+        shown.replace(next);
+        render();
+    });
+    prev.connect_clicked({
+        let go = go.clone();
+        move |_| go(-1)
+    });
+    next.connect_clicked({
+        let go = go.clone();
+        move |_| go(1)
+    });
+    home.connect_clicked({
+        let go = go.clone();
+        move |_| go(0)
+    });
 
-    let scroll = gtk::EventControllerScroll::new(gtk::EventControllerScrollFlags::VERTICAL | gtk::EventControllerScrollFlags::DISCRETE);
-    scroll.connect_scroll({ let go = go.clone(); move |_, _, dy| { go(if dy > 0.0 { 1 } else { -1 }); glib::Propagation::Stop } });
+    let scroll = gtk::EventControllerScroll::new(
+        gtk::EventControllerScrollFlags::VERTICAL | gtk::EventControllerScrollFlags::DISCRETE,
+    );
+    scroll.connect_scroll({
+        let go = go.clone();
+        move |_, _, dy| {
+            go(if dy > 0.0 { 1 } else { -1 });
+            glib::Propagation::Stop
+        }
+    });
     window.add_controller(scroll);
 
     let main_loop = glib::MainLoop::new(None, false);
 
-    let outside = gtk::GestureClick::new();
-    outside.set_propagation_phase(gtk::PropagationPhase::Capture);
-    outside.connect_pressed({
-        let (panel, main_loop) = (panel.clone(), main_loop.clone());
-        move |g, _, x, y| {
-            let inside = g.widget().and_then(|w| panel.compute_bounds(&w))
-                .is_some_and(|b| b.contains_point(&gtk::graphene::Point::new(x as f32, y as f32)));
-            if !inside { main_loop.quit() }
-        }
-    });
-    window.add_controller(outside);
-
     let keys = gtk::EventControllerKey::new();
     keys.connect_key_pressed({
-        let (go, main_loop) = (go.clone(), main_loop.clone());
+        let go = go.clone();
         move |_, key, _, _| {
             match key {
-                gdk::Key::Escape => main_loop.quit(),
                 gdk::Key::Left | gdk::Key::Page_Up => go(-1),
                 gdk::Key::Right | gdk::Key::Page_Down => go(1),
                 gdk::Key::Home => go(0),
@@ -211,25 +192,10 @@ fn main() {
     });
     window.add_controller(keys);
 
-    // Close when focus moves to another window (only after it has had focus once)
-    let had_focus = Cell::new(false);
-    window.connect_is_active_notify({
+    layer_popup::close_on_dismiss(&window, Some(stamp), {
         let main_loop = main_loop.clone();
-        move |w| {
-            if w.is_active() {
-                had_focus.set(true)
-            } else if had_focus.get() {
-                // Clicking the bar's date also drops focus first; the stamp stops that click reopening it
-                let _ = std::fs::write(&stamp, "");
-                main_loop.quit()
-            }
-        }
+        move || main_loop.quit()
     });
-    window.connect_close_request({
-        let main_loop = main_loop.clone();
-        move |_| { main_loop.quit(); glib::Propagation::Proceed }
-    });
-
     window.present();
     main_loop.run();
 }

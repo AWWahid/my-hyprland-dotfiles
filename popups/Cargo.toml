@@ -5,7 +5,7 @@ edition = "2024"
 
 [dependencies]
 gtk = { package = "gtk4", version = "*", features = ["v4_12"] }
-gtk4-layer-shell = "*"
+layer-popup = { path = "../layer-popup" }
 
 [profile.release]
 lto = true
