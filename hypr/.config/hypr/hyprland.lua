@@ -51,15 +51,19 @@ local menu        = "fuzzel"
 
 -- Activate graphical-session.target so systemd user services that require it (xdg-desktop-portal) can start
 hl.on("hyprland.start", function ()
-    -- A user manager that outlives a logout keeps the old session ID; the polkit agent must register for this one
-    hl.exec_cmd("systemctl --user import-environment XDG_SESSION_ID && systemctl --user start hyprland-session.target")
+    -- A user manager that outlives a logout keeps the old display and session ID: import this session's.
+    -- graphical-session.target can outlive it too (stopping ours doesn't stop it), keeping a dead polkit
+    -- agent; stop it so this start is a fresh one
+    hl.exec_cmd("dbus-update-activation-environment --systemd WAYLAND_DISPLAY XDG_CURRENT_DESKTOP HYPRLAND_INSTANCE_SIGNATURE XDG_SESSION_ID && systemctl --user stop graphical-session.target && systemctl --user reset-failed && systemctl --user start hyprland-session.target")
     -- GTK apps take the cursor from gsettings, not XCURSOR_THEME (theme-toggle.sh sets cursor-theme)
     hl.exec_cmd("gsettings set org.gnome.desktop.interface cursor-size 32 && gsettings set org.gnome.desktop.interface font-name 'Inter 13.5' && gsettings set org.gnome.desktop.interface monospace-font-name 'Geist Mono 13.5'")
     -- Mousepad as a TextEdit equivalent: Helvetica clone (Nimbus Sans) like TextEdit's default
     hl.exec_cmd("gsettings set org.xfce.mousepad.preferences.view use-default-monospace-font false && gsettings set org.xfce.mousepad.preferences.view font-name 'Nimbus Sans 15'")
 end)
 hl.on("hyprland.shutdown", function ()
-    hl.exec_cmd("systemctl --user stop hyprland-session.target")
+    -- graphical-session.target, not ours: stopping it stops ours (BindsTo) and the agent (PartOf);
+    -- then drop the dead display so nothing restarts against it
+    hl.exec_cmd("systemctl --user stop graphical-session.target; systemctl --user unset-environment WAYLAND_DISPLAY HYPRLAND_INSTANCE_SIGNATURE")
 end)
 
 hl.on("hyprland.start", function ()
