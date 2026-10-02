@@ -39,7 +39,10 @@ progressbar progress { min-height: 6px; border-radius: 999px; }
     border-radius: 18px;
     padding: 10px 14px;
 }
-.tile:hover { background: alpha(currentColor, 0.12); }
+/* Hover like waybar and fuzzel: solid accent, content black (dark mode) or white (light) */
+.tile:hover { background: @accent_bg_color; }
+.tile:hover, .tile:hover .dim { color: @hover_fg; }
+.tile:hover .badge, .tile.on:hover .badge { background: alpha(currentColor, 0.15); color: inherit; }
 .tile .badge {
     min-width: 40px; min-height: 40px; border-radius: 999px;
     background: alpha(currentColor, 0.1);
@@ -516,7 +519,9 @@ fn main() {
 
     let display = gdk::Display::default().unwrap();
     let provider = gtk::CssProvider::new();
-    provider.load_from_string(CSS);
+    // Hovered tiles: black text in dark mode, white in light, like waybar's icon on its accent fill
+    let dark = gio::Settings::new("org.gnome.desktop.interface").string("color-scheme") == "prefer-dark";
+    provider.load_from_string(&format!("@define-color hover_fg {};\n{CSS}", if dark { "#000000" } else { "#ffffff" }));
     gtk::style_context_add_provider_for_display(&display, &provider, gtk::STYLE_PROVIDER_PRIORITY_APPLICATION);
 
     let window = gtk::Window::new();

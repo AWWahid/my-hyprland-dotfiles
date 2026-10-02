@@ -2,7 +2,6 @@
 @import "accent.css";
 @import "icons.css";
 @import "bar.css";
-@import "hover.css";
 @import "apps.css";
 
 * {
@@ -68,8 +67,33 @@ window#waybar {
     color: @icon;
 }
 
-/* icon colour (icons.css), hover style (hover.css) and dock icon set (apps.css) are themes/ variants picked in the personalize panel;
-   every hover-*.css lists the clickable modules, so a new clickable module goes in all four */
+/* icon colour (icons.css) and dock icon set (apps.css) are themes/ variants picked in the personalize panel */
+
+/* Hover: solid accent highlight (like fuzzel menus and the quick-settings tiles), icon in the bar colour, like the active workspace */
+/* #waybar prefix: two ids outrank the per-module colours (battery, power, .off) that come later in style.css */
+#waybar #custom-expand:hover,
+#waybar #custom-launcher:hover,
+#waybar #custom-files:hover,
+#waybar #custom-terminal:hover,
+#waybar #custom-firefox:hover,
+#waybar #custom-downloads:hover,
+#waybar #custom-zed:hover,
+#waybar #custom-notepad:hover,
+#waybar #custom-obsidian:hover,
+#waybar #custom-activity:hover,
+#waybar #network:hover,
+#waybar #custom-stats:hover,
+#waybar #custom-notifications:hover,
+#waybar #pulseaudio:hover,
+#waybar #battery:hover,
+#waybar #clock:hover,
+#waybar #custom-recording:hover,
+#waybar #custom-power:hover {
+    color: @bg;
+    background: @accent;
+    border-radius: 8px;
+}
+/* a new clickable module goes in the hover list above */
 
 #workspaces button {
     min-width: 39px;

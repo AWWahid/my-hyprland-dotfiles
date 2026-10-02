@@ -1,4 +1,4 @@
-//! Personalize panel (SUPER+W): light/dark, accent color, menu bar icon color, background and hover, and wallpaper.
+//! Personalize panel (SUPER+W): light/dark, accent color, menu bar icon color and background, and wallpaper.
 //! Runs only while open: SUPER+W starts it or kills the running one; Esc, clicking outside or focusing another window closes it.
 //! Wallpaper accents come from matugen (scheme-smart, both modes); a manual accent is used as picked, for the current mode only.
 //! Build/install: cargo install --path ~/dotfiles/personalize --root ~/.local
@@ -54,7 +54,6 @@ struct State {
     icons_accent: bool,
     bar_solid: bool,
     apps_filled: bool,
-    hover: String,
     wide_gaps: bool,
     wallpaper: Option<PathBuf>,
 }
@@ -71,10 +70,6 @@ impl State {
             icons_accent: fs::read_link(cfg("waybar/icons.css")).is_ok_and(|t| t.to_string_lossy().contains("accent")),
             bar_solid: fs::read_link(cfg("waybar/bar.css")).is_ok_and(|t| t.to_string_lossy().contains("solid")),
             apps_filled: fs::read_link(cfg("waybar/apps.css")).is_ok_and(|t| t.to_string_lossy().contains("filled")),
-            // themes/hover-<style>.css
-            hover: fs::read_link(cfg("waybar/hover.css")).ok()
-                .and_then(|t| t.file_stem()?.to_str()?.strip_prefix("hover-").map(String::from))
-                .unwrap_or("pill".into()),
             wide_gaps: fs::read_to_string(gaps_file()).is_ok_and(|g| g.trim() == "wide"),
             // Falls back to `current` for a wallpaper set before `source` existed
             wallpaper: fs::canonicalize(source_link()).ok()
@@ -93,7 +88,7 @@ impl State {
     }
 }
 
-enum Op { Mode(bool), Wallpaper(PathBuf, Option<PathBuf>), Refit(PathBuf), FromWallpaper(Option<PathBuf>), Manual(String), Icons(bool), Apps(bool), Bar(bool), Hover(&'static str), Gaps(bool) }
+enum Op { Mode(bool), Wallpaper(PathBuf, Option<PathBuf>), Refit(PathBuf), FromWallpaper(Option<PathBuf>), Manual(String), Icons(bool), Apps(bool), Bar(bool), Gaps(bool) }
 
 /// Sets both accents from the image, each from its own matugen run with that mode's fallback
 /// (white for dark, black for light); false (accents untouched) if matugen fails.
@@ -184,7 +179,6 @@ fn run(op: Op, mut s: State) {
         Op::Mode(dark) => theme(if dark { "dark" } else { "light" }),
         Op::Icons(accent) => waybar_link("icons.css", if accent { "themes/icons-accent.css" } else { "themes/icons-mono.css" }),
         Op::Apps(filled) => waybar_link("apps.css", if filled { "themes/apps-filled.css" } else { "themes/apps-outline.css" }),
-        Op::Hover(style) => waybar_link("hover.css", &format!("themes/hover-{style}.css")),
         Op::Bar(solid) => waybar_link("bar.css", if solid { "themes/bar-solid.css" } else { "themes/bar-translucent.css" }),
         Op::Gaps(wide) => {
             let _ = fs::write(gaps_file(), if wide { "wide\n" } else { "thin\n" });
@@ -545,10 +539,6 @@ fn appearance(ctx: &Rc<Ctx>, s: &State, pane: &gtk::Box) {
     card.append(&row("App icons", &segmented(ctx, &[("Outline", false), ("Filled", true)], s.apps_filled, Op::Apps)));
     card.append(&gtk::Separator::new(gtk::Orientation::Horizontal));
     card.append(&row("Menu bar background", &segmented(ctx, &[("Solid", true), ("Translucent", false)], s.bar_solid, Op::Bar)));
-    card.append(&gtk::Separator::new(gtk::Orientation::Horizontal));
-    let hovers = [("Color", "color"), ("Pill", "pill"), ("Underline", "underline"), ("Lines", "lines"), ("Fill", "fill")];
-    let current = hovers.iter().map(|&(_, v)| v).find(|v| *v == s.hover).unwrap_or("pill");
-    card.append(&row("Menu bar hover", &segmented(ctx, &hovers, current, Op::Hover)));
     card.append(&gtk::Separator::new(gtk::Orientation::Horizontal));
     card.append(&row("Window gaps", &segmented(ctx, &[("Thin", false), ("Resizable", true)], s.wide_gaps, Op::Gaps)));
     pane.append(&card);

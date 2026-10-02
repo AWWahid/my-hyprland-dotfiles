@@ -27,11 +27,10 @@ ln -sfn themes/$mode.css  $cfg/waybar/colors.css
 ln -sfn themes/$mode      $cfg/mako/colors
 
 # Accent: generated files (gitignored) so accent.conf stays the single source.
-# accent.conf, icons.css, bar.css, hover.css and apps.css are personalize's state (gitignored); defaults on a fresh install
+# accent.conf, icons.css, bar.css and apps.css are personalize's state (gitignored); defaults on a fresh install
 [ -f $cfg/hypr/accent.conf ] || printf 'source=wallpaper\ndark=#33ccff\nlight=#0077b3\n' > $cfg/hypr/accent.conf
 [ -L $cfg/waybar/icons.css ] || ln -sfn themes/icons-mono.css $cfg/waybar/icons.css
 [ -L $cfg/waybar/bar.css ] || ln -sfn themes/bar-translucent.css $cfg/waybar/bar.css
-[ -L $cfg/waybar/hover.css ] || ln -sfn themes/hover-pill.css $cfg/waybar/hover.css
 [ -L $cfg/waybar/apps.css ] || ln -sfn themes/apps-filled.css $cfg/waybar/apps.css
 accent=$(sed -n "s/^$mode=#\?//p" $cfg/hypr/accent.conf)
 r=$((16#${accent:0:2})) g=$((16#${accent:2:2})) b=$((16#${accent:4:2}))
@@ -87,8 +86,9 @@ EOF
 } > $cfg/yazi/theme.toml
 
 rm -f $cfg/fuzzel/colors.ini   # was a symlink into themes/; don't write through it
-# Selection matches waybar's active style: accent at 15% (0x26) behind normal text
-{ cat $cfg/fuzzel/themes/$mode.ini; echo "match=${accent}ff"; echo "selection=${accent}26"; echo "selection-match=${accent}ff"; } > $cfg/fuzzel/colors.ini
+# Selection matches waybar's hover: solid accent, row text in the background colour
+# (later keys win, so this selection-text overrides the theme's)
+{ cat $cfg/fuzzel/themes/$mode.ini; echo "match=${accent}ff"; echo "selection=${accent}ff"; echo "selection-text=${bg}ff"; echo "selection-match=${bg}ff"; } > $cfg/fuzzel/colors.ini
 
 # btop: accent on the highlights and the selected row; the semantic gradients
 # (temperature, load, network) stay fixed. Read at startup, so an open btop picks it up next launch
