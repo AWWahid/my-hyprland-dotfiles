@@ -66,9 +66,9 @@ fn main() {
     }
 
     // Software rendering: a small short-lived popup is cheaper on the CPU than waking the iGPU
-    std::env::set_var("GSK_RENDERER", "cairo");
+    unsafe { std::env::set_var("GSK_RENDERER", "cairo") };
     // No accessibility bus on this system; skips a failing D-Bus lookup at startup
-    std::env::set_var("GTK_A11Y", "none");
+    unsafe { std::env::set_var("GTK_A11Y", "none") };
     gtk::init().expect("gtk init");
 
     let provider = gtk::CssProvider::new();

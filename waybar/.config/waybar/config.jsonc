@@ -11,7 +11,8 @@
     ],
     "modules-right": [
         "custom/recording",
-        "group/traydrawer",
+        "custom/expand",
+        "custom/stats",
         "network",
         "pulseaudio",
         "battery",
@@ -139,16 +140,6 @@
             "\uf065"
         ]
     },
-    "bluetooth": {
-        "format": "\ue1a7",
-        "format-off": "\ue1a9",
-        "format-disabled": "\ue1a9",
-        "format-connected": "\ue1a8",
-        "format-no-controller": "",
-        "tooltip-format-connected": "{device_enumerate}",
-        "tooltip-format-enumerate-connected": "{device_alias}",
-        "on-click": "~/.config/hypr/scripts/bt-menu.sh"
-    },
     "battery": {
         "interval": 60,
         "states": {
@@ -172,22 +163,6 @@
         "tooltip": false,
         "on-click": "pkill -x fuzzel || ~/.config/hypr/scripts/power-button-menu.sh"
     },
-    "group/traydrawer": {
-        "orientation": "horizontal",
-        "modules": [
-            "custom/expand",
-            "bluetooth",
-            "custom/nightshift",
-            "custom/vpn",
-            "tray"
-        ],
-        "drawer": {
-            "click-to-reveal": true,
-            "transition-left-to-right": false,
-            "transition-duration": 200,
-            "children-class": "drawer-child"
-        }
-    },
     "custom/recording": {
         "exec": "~/.config/hypr/scripts/record.sh status",
         "return-type": "json",
@@ -195,28 +170,14 @@
         "signal": 10,
         "on-click": "~/.config/hypr/scripts/record.sh stop"
     },
-    "custom/nightshift": {
-        "exec": "~/.config/hypr/scripts/nightshift.sh",
-        "return-type": "json",
-        "interval": "once",
-        "signal": 9,
-        "on-click": "~/.config/hypr/scripts/nightshift.sh toggle",
-        "on-scroll-up": "~/.config/hypr/scripts/nightshift.sh warmer",
-        "on-scroll-down": "~/.config/hypr/scripts/nightshift.sh cooler"
-    },
-    "custom/vpn": {
-        "exec": "~/.config/hypr/scripts/vpn-menu.sh status",
-        "return-type": "json",
-        "interval": "once",
-        "signal": 11,
-        "on-click": "pkill -x fuzzel || ~/.config/hypr/scripts/vpn-menu.sh"
-    },
     "custom/expand": {
-        "format": "\ue5cb",
-        "tooltip-format": "Hidden icons"
+        "format": "\ue5ce",
+        "tooltip-format": "Quick settings",
+        "on-click": "pkill -fx 'bar-popup toggles' || bar-popup toggles"
     },
-    "tray": {
-        "spacing": 12,
-        "icon-size": 24
+    "custom/stats": {
+        "format": "\ue9e4",
+        "tooltip-format": "Performance",
+        "on-click": "pkill -fx 'bar-popup stats' || bar-popup stats"
     }
 }

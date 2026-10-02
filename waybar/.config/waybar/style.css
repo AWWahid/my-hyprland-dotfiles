@@ -43,9 +43,7 @@ window#waybar {
 #custom-power,
 #custom-expand,
 #network,
-#bluetooth,
-#custom-nightshift,
-#custom-vpn,
+#custom-stats,
 #custom-recording,
 #custom-notifications {
     font-family: "Material Symbols Filled";
@@ -63,18 +61,11 @@ window#waybar {
 #custom-obsidian,
 #custom-activity,
 #network,
-#bluetooth,
-#custom-nightshift,
-#custom-vpn,
+#custom-stats,
 #custom-recording,
 #custom-notifications {
     font-size: 27px;
     color: @icon;
-}
-
-/* revealed drawer icons get a faint tint, so an open drawer is obvious */
-.drawer-child {
-    background: alpha(@accent, 0.15);
 }
 
 /* icon colour (icons.css), hover style (hover.css) and dock icon set (apps.css) are themes/ variants picked in the personalize panel;
@@ -85,12 +76,9 @@ window#waybar {
     padding: 0;
 }
 
-#tray,
 #pulseaudio,
 #network,
-#bluetooth,
-#custom-nightshift,
-#custom-vpn,
+#custom-stats,
 #battery,
 #custom-expand,
 #custom-power,
@@ -124,10 +112,7 @@ window#waybar {
 
 #pulseaudio.muted,
 #network.disconnected,
-#network.disabled,
-#bluetooth.off,
-#custom-nightshift.off,
-#custom-vpn.off {
+#network.disabled {
     color: @muted;
 }
 

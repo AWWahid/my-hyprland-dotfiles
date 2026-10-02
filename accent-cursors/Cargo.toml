@@ -4,7 +4,7 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
-cairo-rs = "0.22"
+cairo-rs = "*"
 
 [profile.release]
 lto = true

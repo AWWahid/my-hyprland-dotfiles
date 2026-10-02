@@ -245,9 +245,9 @@ fn wallpapers(folder: &Path) -> Vec<(PathBuf, PathBuf)> {
 
 fn css(s: &State, walls: &[(PathBuf, PathBuf)]) -> String {
     let (bg, fg, dim, border, card, ctrl, ctrl_on) = if s.dark {
-        ("alpha(#000000, 0.85)", "#ffffff", "alpha(#ffffff, 0.55)", "alpha(#ffffff, 0.14)", "alpha(#ffffff, 0.06)", "alpha(#ffffff, 0.10)", "alpha(#ffffff, 0.28)")
+        ("alpha(@window_bg_color, 0.85)", "#ffffff", "alpha(#ffffff, 0.55)", "alpha(#ffffff, 0.14)", "alpha(#ffffff, 0.06)", "alpha(#ffffff, 0.10)", "alpha(#ffffff, 0.28)")
     } else {
-        ("alpha(#ffffff, 0.85)", "#000000", "alpha(#000000, 0.50)", "alpha(#000000, 0.10)", "alpha(#000000, 0.04)", "alpha(#000000, 0.07)", "#ffffff")
+        ("alpha(@window_bg_color, 0.85)", "#000000", "alpha(#000000, 0.50)", "alpha(#000000, 0.10)", "alpha(#000000, 0.04)", "alpha(#000000, 0.07)", "#ffffff")
     };
     let accent = s.accent();
     let rgb = |i: usize| u32::from_str_radix(accent.get(i..i + 2).unwrap_or("00"), 16).unwrap_or(0);
@@ -656,9 +656,9 @@ fn browse_folder(ctx: &Rc<Ctx>) {
 
 fn main() {
     // Software rendering: a short-lived panel is cheaper on the CPU than waking the iGPU
-    std::env::set_var("GSK_RENDERER", "cairo");
+    unsafe { std::env::set_var("GSK_RENDERER", "cairo") };
     // No accessibility bus on this system; skips a failing D-Bus lookup at startup
-    std::env::set_var("GTK_A11Y", "none");
+    unsafe { std::env::set_var("GTK_A11Y", "none") };
     gtk::init().expect("gtk init");
     // Instant state changes: no hover/press/toggle transitions
     if let Some(settings) = gtk::Settings::default() { settings.set_gtk_enable_animations(false) }

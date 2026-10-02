@@ -471,10 +471,10 @@ hl.window_rule({
     xray = false,
 })
 
--- Bar, launcher and notification centre (fuzzel), notifications (mako), calendar popup and personalize panel match window transparency with the same blur
+-- Bar, launcher and notification centre (fuzzel), notifications (mako), calendar, bar popups (stats, quick settings) and personalize panel match window transparency with the same blur
 hl.layer_rule({
     name  = "blur-layers",
-    match = { namespace = "^(waybar|launcher|notifications|calendar|personalize)$" },
+    match = { namespace = "^(waybar|launcher|notifications|calendar|bar-popup|personalize)$" },
     blur  = true,
 })
 
@@ -488,15 +488,15 @@ hl.layer_rule({
 -- Popups always open over whatever is on screen, so they blur the real windows behind them
 hl.layer_rule({
     name  = "blur-behind-popups",
-    match = { namespace = "^(launcher|notifications|calendar|personalize)$" },
+    match = { namespace = "^(launcher|notifications|calendar|bar-popup|personalize)$" },
     xray  = false,
 })
 
--- Blur only the visible panels, not the transparent parts: the calendar popup and personalize panel
+-- Blur only the visible panels, not the transparent parts: the calendar, bar popups and personalize panel
 -- are full-screen transparent layers (clicking outside closes them); the launcher and notifications have rounded corners
 hl.layer_rule({
     name         = "popup-panel-only",
-    match        = { namespace = "^(calendar|personalize|notifications|launcher)$" },
+    match        = { namespace = "^(calendar|bar-popup|personalize|notifications|launcher)$" },
     ignore_alpha = 0.01,
 })
 

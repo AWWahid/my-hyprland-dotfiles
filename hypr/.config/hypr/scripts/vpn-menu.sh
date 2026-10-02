@@ -1,28 +1,18 @@
 #!/usr/bin/env bash
-# VPN menu (waybar module in the chevron). Every NetworkManager WireGuard connection is a
+# VPN menu (quick settings popup, `bar-popup toggles`). Every NetworkManager WireGuard connection is a
 # choice; at most one is up. Only runs nmcli; the profiles are owned by the user
 # (connection.permissions), so nothing asks for a password. Off always works offline.
-#   waybar:       vpn-menu.sh          open the menu
-#   waybar exec:  vpn-menu.sh status   print waybar JSON
+#   popup click:  vpn-menu.sh          open the menu
+#   popup status: vpn-menu.sh status   print status JSON
 #   hyprland.lua: vpn-menu.sh apply    bring up the last choice, if any
 #
 # The choice is saved to a state file and replayed at login instead of NetworkManager's
-# autoconnect, so the waybar icon is refreshed when it comes up and nothing polls.
+# autoconnect, so a reboot never depends on NetworkManager state.
 
 state="${XDG_STATE_HOME:-$HOME/.local/state}/vpn"
 
 notify() { notify-send -a "VPN" "$@"; }
 pick() { fuzzel --dmenu --index --hide-prompt "$@"; }
-# Signal only a waybar that already handles RTMIN+11: at login `apply` races its
-# startup, and an unhandled real-time signal kills it. One not ready yet runs
-# `status` itself when its modules start, so skipping it loses nothing.
-refresh() {
-    local bit=$(( 1 << ($(kill -l RTMIN) + 10) )) pid cgt
-    for pid in $(pgrep -x waybar); do
-        cgt=$(awk '/^SigCgt/{print $2}' "/proc/$pid/status" 2>/dev/null) || continue
-        (( 0x${cgt:-0} & bit )) && kill -s RTMIN+11 "$pid"
-    done
-}
 save() { mkdir -p "${state%/*}"; echo "$1" >"$state"; }
 
 vpns() { nmcli -t -f NAME,TYPE connection show | awk -F: '$2 == "wireguard" { print $1 }' | sort; }
@@ -51,8 +41,7 @@ case "$1" in
         fi ;;
     apply)
         want=$(cat "$state" 2>/dev/null)
-        [ -n "$want" ] && [ "$(active)" != "$want" ] && nmcli connection up "$want" >/dev/null
-        refresh ;;
+        [ -n "$want" ] && [ "$(active)" != "$want" ] && nmcli connection up "$want" >/dev/null ;;
     *)
         cur=$(active)
         mapfile -t names < <(vpns)
@@ -67,7 +56,7 @@ case "$1" in
         idx=$(printf '%s\n' "${labels[@]}" | pick)
         [[ "$idx" =~ ^[0-9]+$ ]] && [ "$idx" -lt "${#labels[@]}" ] || exit 0
         if [ "$idx" = 0 ]; then
-            down_all; save ""; refresh; notify "VPN off"
+            down_all; save ""; notify "VPN off"
             exit 0
         fi
         want=${names[idx-1]}
@@ -77,6 +66,5 @@ case "$1" in
             save "$want"; notify "VPN on" "$(label "$want")"
         else
             save ""; notify "Could not start $(label "$want")" "Back on plain internet"
-        fi
-        refresh ;;
+        fi ;;
 esac

@@ -1,5 +1,5 @@
 [package]
-name = "calendar-popup"
+name = "bar-popup"
 version = "0.1.0"
 edition = "2024"
 
