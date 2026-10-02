@@ -45,3 +45,4 @@ Cargo.lock
 
 # Untested hardware workaround, kept local (see the file's header)
 docs/wifi-rtw88-aspm.md
+Original-Laptop-CLAUDE.md
