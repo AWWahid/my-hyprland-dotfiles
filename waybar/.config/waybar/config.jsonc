@@ -51,7 +51,7 @@
     "custom/firefox": {
         "format": "\ue80b",
         "tooltip-format": "Firefox",
-        "on-click": "flatpak run org.mozilla.firefox"
+        "on-click": "firefox"
     },
     "custom/downloads": {
         "format": "\uf090",
