@@ -66,7 +66,7 @@
     "custom/obsidian": {
         "format": "\uf8f1",
         "tooltip-format": "Obsidian",
-        "on-click": "~/.local/opt/obsidian/Obsidian.AppImage --ozone-platform-hint=auto --enable-features=WaylandWindowDecorations"
+        "on-click": "obsidian"
     },
     "custom/activity": {
         "format": "\ueaa2",

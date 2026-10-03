@@ -6,24 +6,28 @@
 # same either way, the missing half is made here: ringed dots for the outline launcher, a
 # solid window and a block arrow for the filled terminal and downloads. The browser takes
 # `language` (line globe) as its outline and `public` (solid globe) as its fill. Code stays
-# line art in both. The gem is traced from the Obsidian AppImage's own icon.
+# line art in both. The gem is traced from Obsidian's own icon (distro package or AppImage).
 # Needs: ImageMagick, potrace, fontforge, curl. Build-time only; the .ttf files are committed.
 set -euo pipefail
 
 outdir="$HOME/dotfiles/fonts/.local/share/fonts"
 appimage="$HOME/.local/opt/obsidian/Obsidian.AppImage"
+icon=usr/share/icons/hicolor/512x512/apps/obsidian.png
 tmp=$(mktemp -d); trap 'rm -rf "$tmp"' EXIT
 
-[ -x "$appimage" ] || { echo "Obsidian AppImage not found at $appimage" >&2; exit 1; }
+if [ -f "/$icon" ]; then
+    src="/$icon"
+elif [ -x "$appimage" ]; then
+    ( cd "$tmp" && "$appimage" --appimage-extract "$icon" >/dev/null )
+    src="$tmp/squashfs-root/$icon"
+else
+    echo "Obsidian not found (no /$icon, no $appimage)" >&2; exit 1
+fi
 
 for n in apps terminal download language public code folder folder-fill \
          note_alt note_alt-fill monitor_heart monitor_heart-fill; do
     curl -fsSL -o "$tmp/$n.svg" "https://cdn.jsdelivr.net/npm/@material-symbols/svg-400/outlined/$n.svg"
 done
-
-( cd "$tmp" && "$appimage" --appimage-extract \
-    'usr/share/icons/hicolor/512x512/apps/obsidian.png' >/dev/null )
-src="$tmp/squashfs-root/usr/share/icons/hicolor/512x512/apps/obsidian.png"
 
 # Same tile removal as obsidian-update, giving the bare gem on transparency.
 box=$(magick "$src" -colorspace HSL -channel G -separate +channel -threshold 25% -format '%@' info:)
