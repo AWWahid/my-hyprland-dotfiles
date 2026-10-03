@@ -245,8 +245,8 @@ elif [ "$(sed -n 's/^accent=#\?//p' "$index" 2>/dev/null)" != "$accent" ] || [ "
 fi
 ln -sfn $theme $icons/macOS-accent   # stable name for XCURSOR_THEME at login
 gsettings set $iface cursor-theme $theme
-hyprctl setcursor macOS 28 >/dev/null   # Hyprland skips reloading an already-loaded theme name
-hyprctl setcursor $theme 28 >/dev/null
+hyprctl setcursor macOS ${XCURSOR_SIZE:-32} >/dev/null   # Hyprland skips reloading an already-loaded theme name
+hyprctl setcursor $theme ${XCURSOR_SIZE:-32} >/dev/null
 
 pkill -USR2 -x waybar   # reload style
 pkill -USR1 -x kitty    # reload config
