@@ -61,7 +61,7 @@
     "custom/zed": {
         "format": "\ue86f",
         "tooltip-format": "Zed",
-        "on-click": "~/.local/bin/zed"
+        "on-click": "$(command -v zeditor || echo zed)"
     },
     "custom/obsidian": {
         "format": "\uf8f1",
