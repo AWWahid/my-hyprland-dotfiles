@@ -10,7 +10,12 @@
 # varia.conf below rather than hardcoded, so remote mode and a changed port follow along.
 # The watcher starts with Varia and is killed with it.
 app=io.github.giantpinkrobots.varia
-conf=$HOME/.var/app/$app/data/varia.conf
+# Native package (Arch: AUR varia) if installed, else the Flatpak
+if command -v varia >/dev/null; then
+    run=(varia); conf=$HOME/.varia/varia.conf
+else
+    run=(flatpak run "$app"); conf=$HOME/.var/app/$app/data/varia.conf
+fi
 
 # Where Varia's aria2 listens. Local mode is a fixed localhost:6801 with no secret (initiate.py);
 # remote mode puts the address in the config.
@@ -69,10 +74,10 @@ while True:
 fi
 
 # Already open: raise it instead of starting a second watcher
-pgrep -f "$app" >/dev/null && exec flatpak run "$app"
+pgrep -f "varia-py.py|$app" >/dev/null && exec "${run[@]}"
 
 # setsid so the watcher leads its own process group and the whole pipeline dies with Varia
 setsid "$0" watch >/dev/null 2>&1 &
 watcher=$!
 trap 'kill -- -"$watcher" 2>/dev/null' EXIT
-flatpak run "$app"
+"${run[@]}"
