@@ -313,9 +313,12 @@ fn set_wallpaper(src: &Path) {
     // Links change only once the copy exists: being killed mid-scale leaves the old wallpaper intact
     relink(&source_link(), src);
     relink(&wallpaper_link(), &shown);
-    // Apply live; if hyprpaper isn't reachable, restart it (it reads the symlink on start)
+    // Apply live, naming each monitor (hyprpaper 0.8 ignores an empty monitor, yet reports ok);
+    // if hyprpaper isn't reachable, restart it (it reads the symlink on start)
     let _ = Command::new("sh").args(["-c",
-        r#"hyprctl hyprpaper wallpaper ",$1" >/dev/null 2>&1 || { pkill -x hyprpaper; setsid -f hyprpaper >/dev/null 2>&1; }"#,
+        r#"for m in $(hyprctl monitors | sed -n 's/^Monitor \([^ ]*\) .*/\1/p'); do
+            hyprctl hyprpaper wallpaper "$m,$1" >/dev/null 2>&1 || { pkill -x hyprpaper; setsid -f hyprpaper >/dev/null 2>&1; break; }
+        done"#,
         "sh"]).arg(&shown).status();
     // Only the shown copy is needed; hyprpaper already holds it, and a later pick rescales from the original
     for stale in fs::read_dir(scaled_dir())
@@ -482,7 +485,7 @@ fn on_color(hex: &str) -> &'static str {
 fn css(s: &State, walls: &[Wall]) -> String {
     let (bg, fg, dim, border, card, ctrl, ctrl_on) = if s.dark {
         (
-            "alpha(@window_bg_color, 0.85)",
+            "@translucent_bg_color",
             "#ffffff",
             "alpha(#ffffff, 0.55)",
             "alpha(#ffffff, 0.14)",
@@ -492,7 +495,7 @@ fn css(s: &State, walls: &[Wall]) -> String {
         )
     } else {
         (
-            "alpha(@window_bg_color, 0.85)",
+            "@translucent_bg_color",
             "#000000",
             "alpha(#000000, 0.50)",
             "alpha(#000000, 0.10)",

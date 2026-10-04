@@ -1,9 +1,9 @@
-/* Black overrides on top of Adwaita-dark: 0.85 backgrounds like the rest of the system, text stays solid */
+/* Black overrides on top of Adwaita-dark: translucent backgrounds like the rest of the system, text stays solid */
 @define-color theme_bg_color #000000;
 @define-color theme_base_color #000000;
-/* Only the window is tinted: nested 0.85 layers would stack back to nearly opaque */
+/* Only the window is tinted: nested translucent layers would stack back to nearly opaque */
 window.background, menu, .csd.popup decoration, tooltip {
-    background-color: rgba(0, 0, 0, 0.85);
+    background-color: @translucent_bg_color;
     background-image: none;
 }
 headerbar, .titlebar, textview, textview text, treeview.view,

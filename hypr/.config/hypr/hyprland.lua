@@ -161,7 +161,7 @@ hl.config({
         rounding       = 0,
         rounding_power = 2,
 
-        -- No active/inactive_opacity: it fades text too. Apps draw 0.85 backgrounds themselves
+        -- No active/inactive_opacity: it fades text too. Apps draw translucent backgrounds themselves (hypr/opacity.conf)
         -- (kitty, zed, waybar, fuzzel, mako, calendar) so text stays solid
 
         -- Darken unfocused windows (focus indicator, since borders are off)

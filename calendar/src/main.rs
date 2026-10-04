@@ -23,11 +23,11 @@ const MONTHS: [&str; 12] = [
 ];
 
 // Colors come from ~/.config/gtk-4.0/gtk.css (theme + accent written by theme-toggle.sh).
-// The panel background is 0.85 like windows (text stays solid); blur comes from Hyprland's layer rule.
+// The panel background is translucent like windows (text stays solid); blur comes from Hyprland's layer rule.
 const CSS: &str = r#"
 window { background: transparent; }
 .panel {
-    background: alpha(@window_bg_color, 0.85);
+    background: @translucent_bg_color;
     border: 1px solid alpha(currentColor, 0.2);
     border-radius: 30px;
     padding: 16px 18px 18px;

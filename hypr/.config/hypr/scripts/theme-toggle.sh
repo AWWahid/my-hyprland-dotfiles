@@ -24,7 +24,14 @@ else
 fi
 
 ln -sfn themes/$mode.css  $cfg/waybar/colors.css
-ln -sfn themes/$mode      $cfg/mako/colors
+
+# Window background opacity: opacity.conf is the single source; apps get it as a fraction or a hex alpha byte
+opacity=$(sed -n 's/^opacity=//p' $cfg/hypr/opacity.conf)
+alpha=$(awk "BEGIN { printf \"%02x\", $opacity * 255 + 0.5 }")
+[ $mode = dark ] && { bg=000000; fg=e6e6e6; } || { bg=ffffff; fg=1a1a1a; }
+
+rm -f $cfg/mako/colors   # was a symlink into themes/; don't write through it
+{ cat $cfg/mako/themes/$mode; echo "background-color=#$bg$alpha"; } > $cfg/mako/colors
 
 # Accent: generated files (gitignored) so accent.conf stays the single source.
 # accent.conf, icons.css, bar.css and apps.css are personalize's state (gitignored); defaults on a fresh install
@@ -36,13 +43,12 @@ accent=$(sed -n "s/^$mode=#\?//p" $cfg/hypr/accent.conf)
 r=$((16#${accent:0:2})) g=$((16#${accent:2:2})) b=$((16#${accent:4:2}))
 (( r * 299 + g * 587 + b * 114 > 150000 )) && on_accent='#000000' || on_accent='#ffffff'
 
-echo "@define-color accent #$accent;" > $cfg/waybar/accent.css
+{ echo "@define-color accent #$accent;"; echo "@define-color translucent_bg alpha(@bg, $opacity);"; } > $cfg/waybar/accent.css
 # Hyprland group tabs (hyprland.lua loads this; a reload is needed, the tab fills are cached)
-# Like waybar's active workspace: accent pill with the window color as text; inactive tabs are window backgrounds (0.85, d9)
-[ $mode = dark ] && { bg=000000; fg=e6e6e6; } || { bg=ffffff; fg=1a1a1a; }
+# Like waybar's active workspace: accent pill with the window color as text; inactive tabs are window backgrounds
 cat > $cfg/hypr/colors.lua <<EOF
 hl.config({ group = { groupbar = {
-    col = { active = "rgb($accent)", inactive = "rgba(${bg}d9)", locked_active = "rgb($accent)", locked_inactive = "rgba(${bg}d9)" },
+    col = { active = "rgb($accent)", inactive = "rgba(${bg}$alpha)", locked_active = "rgb($accent)", locked_inactive = "rgba(${bg}$alpha)" },
     text_color = "rgb($bg)", text_color_inactive = "rgb($fg)",
 } } })
 EOF
@@ -50,7 +56,7 @@ hyprctl reload >/dev/null
 # Kitty: accent in palette slot 16 (the bash prompt's user@host), so open terminals follow it on reload.
 # rm first: this used to be a symlink into themes/, and writing through it would overwrite the theme.
 rm -f $cfg/kitty/colors.conf
-{ cat $cfg/kitty/themes/$mode.conf; echo "color16 #$accent"; } > $cfg/kitty/colors.conf
+{ cat $cfg/kitty/themes/$mode.conf; echo "color16 #$accent"; echo "background_opacity $opacity"; } > $cfg/kitty/colors.conf
 
 # Yazi: accent on its interface (cwd, tabs, mode, borders); file names colored by kind of file:
 # folders amber, images magenta, audio/video purple, archives red, executables green, the rest plain text.
@@ -88,7 +94,7 @@ EOF
 rm -f $cfg/fuzzel/colors.ini   # was a symlink into themes/; don't write through it
 # Selection matches waybar's hover: solid accent, row text in the background colour
 # (later keys win, so this selection-text overrides the theme's)
-{ cat $cfg/fuzzel/themes/$mode.ini; echo "match=${accent}ff"; echo "selection=${accent}ff"; echo "selection-text=${bg}ff"; echo "selection-match=${bg}ff"; } > $cfg/fuzzel/colors.ini
+{ cat $cfg/fuzzel/themes/$mode.ini; echo "match=${accent}ff"; echo "selection=${accent}ff"; echo "selection-text=${bg}ff"; echo "selection-match=${bg}ff"; echo "background=$bg$alpha"; } > $cfg/fuzzel/colors.ini
 
 # btop: accent on the highlights and the selected row; the semantic gradients
 # (temperature, load, network) stay fixed. Read at startup, so an open btop picks it up next launch
@@ -109,8 +115,12 @@ for gtk in gtk-3.0 gtk-4.0; do
 @define-color accent_fg_color $on_accent;
 @define-color theme_selected_bg_color #$accent;
 @define-color theme_selected_fg_color $on_accent;
+@define-color translucent_bg_color alpha(#$bg, $opacity);
 EOF
 done
+
+# Zed reads the opacity only from its theme file, so that is generated from the tracked template
+sed "s/@ALPHA@/$alpha/g" $cfg/zed/github-pure.json.in > $cfg/zed/themes/github-pure.json
 # libadwaita reads the named colours above; plain GTK4's built-in theme has its blue baked in
 cat >> $cfg/gtk-4.0/gtk.css <<EOF
 scale trough highlight, progressbar progress, levelbar block.filled { background-color: #$accent; background-image: none; border-color: #$accent; }

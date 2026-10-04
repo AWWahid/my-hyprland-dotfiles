@@ -1,2 +1,2 @@
-/* Bar matches windows: same 0.85 as the backgrounds apps draw */
-@define-color bar_bg alpha(@bg, 0.85);
+/* Bar matches windows: the window opacity from hypr/opacity.conf (theme-toggle.sh writes translucent_bg) */
+@define-color bar_bg @translucent_bg;
