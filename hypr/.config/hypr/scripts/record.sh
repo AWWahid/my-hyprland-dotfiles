@@ -60,6 +60,8 @@ name="$dir/Screen Recording $(date '+%Y-%m-%d at %H.%M.%S')"
 modules=()
 
 if command -v gpu-screen-recorder >/dev/null; then
+    # Not wl-screenrec here: VA-API on NVIDIA is unreliable. Capture is KMS, where -fm content
+    # is unavailable, so recordings are VFR.
     # slurp gives "X,Y WxH"; gpu-screen-recorder wants WxH+X+Y
     if [ -n "$g" ]; then
         read -r xy wh <<<"$g"

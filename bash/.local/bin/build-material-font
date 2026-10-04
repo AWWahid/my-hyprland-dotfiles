@@ -3,6 +3,7 @@
 # weight 400, 24px optical size, as a plain static font (waybar can't set font axes).
 # Latest from google/material-design-icons; fontTools runs from a throwaway venv.
 # Usage: build-material-font [dir]   (default ~/.local/share/fonts)
+# After a rebuild restart waybar fully: SIGUSR2 does not reload fonts.
 set -euo pipefail
 
 dir="${1:-$HOME/.local/share/fonts}"

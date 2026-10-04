@@ -160,6 +160,7 @@ hex_hsl() {   # RRGGBB -> "H S L" (hue in degrees, the other two in percent)
 }
 
 obs_json=$cfg/obsidian/obsidian.json
+# ui.css is the source; the vault copy is overwritten on every apply
 obs_ui=$(dirname "$(readlink -f "$0")")/../../../../obsidian/ui.css
 if [ -f "$obs_json" ] && [ -f "$obs_ui" ]; then
     obs_css=$(

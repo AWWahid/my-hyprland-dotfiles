@@ -8,6 +8,7 @@
 # `language` (line globe) as its outline and `public` (solid globe) as its fill. Code stays
 # line art in both. The gem is traced from Obsidian's own icon (distro package or AppImage).
 # Needs: ImageMagick, potrace, fontforge, curl. Build-time only; the .ttf files are committed.
+# After a rebuild restart waybar fully: SIGUSR2 does not reload fonts.
 set -euo pipefail
 
 outdir="$HOME/dotfiles/fonts/.local/share/fonts"
