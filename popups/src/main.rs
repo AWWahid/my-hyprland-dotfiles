@@ -540,14 +540,15 @@ fn json_field<'a>(s: &'a str, key: &str) -> &'a str {
 }
 
 fn bluetooth() -> Option<(bool, String)> {
-    let show = sh("bluetoothctl", &["show"]);
+    // Without bluetoothd running, bluetoothctl waits for it forever
+    let show = sh("timeout", &["2", "bluetoothctl", "show"]);
     if show.is_empty() || show.contains("No default controller") {
         return None;
     }
     if !show.contains("Powered: yes") {
         return Some((false, "Off".into()));
     }
-    let names: Vec<String> = sh("bluetoothctl", &["devices", "Connected"])
+    let names: Vec<String> = sh("timeout", &["2", "bluetoothctl", "devices", "Connected"])
         .lines()
         .filter_map(|l| l.splitn(3, ' ').nth(2).map(str::to_string))
         .collect();
@@ -631,7 +632,8 @@ fn build_toggles(panel: &gtk::Box, quit: &Rc<dyn Fn()>) {
     let vpn = Tile::new("\u{e0da}", "VPN", true);
 
     // A controller exists: a file check, so the layout is fixed before anything is drawn
-    if fs::read_dir("/sys/class/bluetooth").is_ok_and(|mut d| d.next().is_some()) {
+    let has_bt = fs::read_dir("/sys/class/bluetooth").is_ok_and(|mut d| d.next().is_some());
+    if has_bt {
         panel.append(&bt.button)
     }
     panel.append(&ns.button);
@@ -677,7 +679,9 @@ fn build_toggles(panel: &gtk::Box, quit: &Rc<dyn Fn()>) {
             }
         });
     };
-    check("bt", Box::new(bluetooth));
+    if has_bt {
+        check("bt", Box::new(bluetooth));
+    }
     check("ns", Box::new(|| night_shift(None)));
     check("vpn", Box::new(vpn_state));
 
