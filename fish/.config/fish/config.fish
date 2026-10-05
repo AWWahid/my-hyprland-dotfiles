@@ -1,5 +1,4 @@
 # PATH and EDITOR come from the bash login shell (bash/.bashrc), which starts Hyprland
-set -g fish_greeting
 
 # z <fragment> jumps to a frequent folder (history shared with yazi)
 if status is-interactive; and type -q zoxide

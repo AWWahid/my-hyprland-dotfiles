@@ -1,4 +1,4 @@
-//! Personalize panel (SUPER+W): light/dark, accent color, menu bar icon color and background, and wallpaper.
+//! Personalize panel (SUPER+W): light/dark, accent color, menu bar icon color and background, wallpaper, and the terminal greeting's picture.
 //! Runs only while open: SUPER+W starts it or kills the running one; Esc, clicking outside or focusing another window closes it.
 //! Wallpaper accents come from matugen (scheme-smart, both modes); a manual accent is used as picked, for the current mode only.
 //! Build/install: cargo install --path ~/dotfiles/personalize --root ~/.local
@@ -47,6 +47,10 @@ fn source_link() -> PathBuf {
 /// Not in ~/.cache: hyprpaper needs the copy at login, so a cache cleaner must not remove it
 fn scaled_dir() -> PathBuf {
     wallpaper_dir().join("scaled")
+}
+/// Read by fish_greeting: links to the wallpaper, a copied picture, or "none" (dangling)
+fn logo_link() -> PathBuf {
+    home().join(".local/share/fastfetch/logo")
 }
 /// Read by hyprland.lua at load
 fn gaps_file() -> PathBuf {
@@ -109,6 +113,15 @@ struct State {
     apps_filled: bool,
     wide_gaps: bool,
     wallpaper: Option<PathBuf>,
+    logo: Logo,
+}
+
+/// The terminal greeting's picture
+#[derive(Clone, PartialEq)]
+enum Logo {
+    Wallpaper,
+    Picture(PathBuf),
+    None,
 }
 
 impl State {
@@ -138,6 +151,12 @@ impl State {
                     .ok()
                     .filter(|p| !p.starts_with(scaled_dir()))
             }),
+            // No link yet is the wallpaper, as in fish_greeting
+            logo: match fs::read_link(logo_link()) {
+                Ok(t) if t == Path::new("none") => Logo::None,
+                Ok(t) if t != wallpaper_link() => Logo::Picture(t),
+                _ => Logo::Wallpaper,
+            },
         }
     }
 
@@ -196,6 +215,7 @@ enum Op {
     Apps(bool),
     Bar(bool),
     Gaps(bool),
+    Logo(Logo),
 }
 
 /// Sets both accents from the image, each from its own matugen run with that mode's fallback
@@ -333,6 +353,34 @@ fn set_wallpaper(src: &Path) {
     }
 }
 
+/// Points the greeting at `logo`. A picked picture is copied next to the link, so it shows even
+/// when its drive is unmounted; the copy's name carries the mtime, as fastfetch caches by path.
+fn set_logo(logo: &Logo) {
+    let link = logo_link();
+    let dir = link.parent().unwrap_or(&link).to_path_buf();
+    let target = match logo {
+        Logo::Wallpaper => Some(wallpaper_link()),
+        Logo::None => Some(PathBuf::from("none")),
+        Logo::Picture(src) => src.file_name().zip(mtime(src)).and_then(|(name, t)| {
+            let copy = dir.join(format!("picture-{t}-{}", name.to_string_lossy()));
+            let _ = fs::create_dir_all(&dir);
+            (copy.exists() || fs::copy(src, &copy).is_ok()).then_some(copy)
+        }),
+    };
+    let Some(target) = target else { return };
+    relink(&link, &target);
+    for stale in fs::read_dir(&dir)
+        .into_iter()
+        .flatten()
+        .flatten()
+        .map(|e| e.path())
+    {
+        if stale != link && stale != target {
+            let _ = fs::remove_file(stale);
+        }
+    }
+}
+
 /// Points a waybar css file at a themes/ variant, like colors.css, and reloads waybar's style
 fn waybar_link(name: &str, target: &str) {
     relink(&cfg(&format!("waybar/{name}")), Path::new(target));
@@ -397,6 +445,7 @@ fn run(op: Op, mut s: State) {
             s.save_accent();
             theme("apply");
         }
+        Op::Logo(logo) => set_logo(&logo),
         Op::Refit(path) => set_wallpaper(&path),
         Op::Wallpaper(path, thumb) => {
             set_wallpaper(&path);
@@ -532,6 +581,9 @@ fn css(s: &State, walls: &[Wall]) -> String {
             css_url(&t)
         );
     }
+    if let Logo::Picture(p) = &s.logo {
+        let _ = writeln!(images, ".logo-pic {{ background-image: {}; }}", css_url(p));
+    }
     format!(
         r#"
 @define-color p_bg {bg}; @define-color p_fg {fg}; @define-color p_dim {dim}; @define-color p_border {border};
@@ -548,6 +600,7 @@ button {{ border: none; box-shadow: none; outline: none; background: none; color
 .pane-icon {{ border-radius: 6px; min-width: 22px; min-height: 22px; color: #ffffff; }}
 .pane-icon.appearance {{ background: #3a3a3c; }}
 .pane-icon.wallpaper {{ background: #32ade6; }}
+.pane-icon.terminal {{ background: #1c1c1e; }}
 
 .pane-title {{ margin: 16px 24px 10px; }}
 .pane {{ padding: 0 24px 24px; }}
@@ -573,6 +626,7 @@ button {{ border: none; box-shadow: none; outline: none; background: none; color
 {presets}{images}
 .current-wall, .thumb {{ background-size: cover; background-position: center; }}
 .current-wall {{ border-radius: 10px; }}
+.logo-preview {{ background-size: contain; background-repeat: no-repeat; background-position: center; }}
 
 .seg {{ background: @p_ctrl; border-radius: 7px; padding: 2px; }}
 .seg button {{ padding: 5px 16px; border-radius: 5px; }}
@@ -594,6 +648,7 @@ button {{ border: none; box-shadow: none; outline: none; background: none; color
 enum Pane {
     Appearance,
     Wallpaper,
+    Terminal,
 }
 
 struct Ctx {
@@ -692,10 +747,10 @@ fn build(ctx: &Rc<Ctx>, s: &State) -> gtk::Box {
     let title = gtk::Label::new(None);
     title.set_markup(&format!(
         "<span size='large' weight='bold'>{}</span>",
-        if ctx.pane.get() == Pane::Appearance {
-            "Appearance"
-        } else {
-            "Wallpaper"
+        match ctx.pane.get() {
+            Pane::Appearance => "Appearance",
+            Pane::Wallpaper => "Wallpaper",
+            Pane::Terminal => "Terminal",
         }
     ));
     title.set_xalign(0.0);
@@ -709,6 +764,7 @@ fn build(ctx: &Rc<Ctx>, s: &State) -> gtk::Box {
     match ctx.pane.get() {
         Pane::Appearance => appearance(ctx, s, &pane),
         Pane::Wallpaper => wallpaper(ctx, s, &pane),
+        Pane::Terminal => terminal(ctx, s, &pane),
     }
     scroll.set_child(Some(&pane));
     main.append(&scroll);
@@ -732,6 +788,12 @@ fn sidebar(ctx: &Rc<Ctx>) -> gtk::Box {
             "Wallpaper",
             "preferences-desktop-wallpaper-symbolic",
             "wallpaper",
+        ),
+        (
+            Pane::Terminal,
+            "Terminal",
+            "utilities-terminal-symbolic",
+            "terminal",
         ),
     ] {
         let b = gtk::Button::new();
@@ -1079,6 +1141,108 @@ fn wallpaper_grid(ctx: &Rc<Ctx>, s: &State, walls: &[Wall]) -> gtk::FlowBox {
         grid.append(&b);
     }
     grid
+}
+
+/// The picture beside the terminal greeting's system info
+fn terminal(ctx: &Rc<Ctx>, s: &State, pane: &gtk::Box) {
+    let card = gtk::Box::new(gtk::Orientation::Vertical, 0);
+    card.add_css_class("card");
+    card.set_margin_top(4);
+    let preview = gtk::Box::new(gtk::Orientation::Vertical, 0);
+    preview.add_css_class("logo-preview");
+    preview.set_size_request(176, 99);
+    preview.set_margin_top(12);
+    preview.set_margin_bottom(12);
+    preview.set_halign(gtk::Align::Start);
+    let (current, name) = match &s.logo {
+        Logo::Wallpaper => {
+            preview.add_css_class("current-wall");
+            (Some(true), "Wallpaper".into())
+        }
+        Logo::None => {
+            preview.set_visible(false);
+            (Some(false), "No picture".into())
+        }
+        Logo::Picture(p) => {
+            preview.add_css_class("logo-pic");
+            // Copies are named picture-<mtime>-<original name>
+            let file = p
+                .file_name()
+                .map_or(String::new(), |n| n.to_string_lossy().into_owned());
+            (
+                None,
+                file.splitn(3, '-').nth(2).unwrap_or(&file).to_string(),
+            )
+        }
+    };
+    let top = gtk::Box::new(gtk::Orientation::Horizontal, 16);
+    top.append(&preview);
+    let l = label(&name, "");
+    l.set_valign(gtk::Align::Center);
+    l.set_ellipsize(gtk::pango::EllipsizeMode::Middle);
+    top.append(&l);
+    card.append(&top);
+    card.append(&gtk::Separator::new(gtk::Orientation::Horizontal));
+    let controls = gtk::Box::new(gtk::Orientation::Horizontal, 8);
+    controls.append(&segmented(
+        ctx,
+        &[("Wallpaper", Some(true)), ("None", Some(false))],
+        current,
+        |w| {
+            Op::Logo(if w == Some(true) {
+                Logo::Wallpaper
+            } else {
+                Logo::None
+            })
+        },
+    ));
+    let choose = gtk::Button::with_label("Choose picture…");
+    choose.add_css_class("folder-btn");
+    choose.connect_clicked({
+        let ctx = ctx.clone();
+        move |_| choose_picture(&ctx)
+    });
+    controls.append(&choose);
+    card.append(&row("Picture", &controls));
+    pane.append(&card);
+    let note = label(
+        "Animated GIFs play in kitty, which keeps redrawing while one is on screen; a still picture costs nothing once drawn.",
+        "caption",
+    );
+    note.set_wrap(true);
+    note.set_margin_top(8);
+    note.set_margin_start(4);
+    pane.append(&note);
+}
+
+/// Picks a still or animated picture for the greeting; the panel hides behind the picker, as for Browse…
+fn choose_picture(ctx: &Rc<Ctx>) {
+    let filter = gtk::FileFilter::new();
+    filter.set_name(Some("Pictures"));
+    for mime in ["image/png", "image/jpeg", "image/webp", "image/gif"] {
+        filter.add_mime_type(mime);
+    }
+    let filters = gio::ListStore::new::<gtk::FileFilter>();
+    filters.append(&filter);
+    let dialog = gtk::FileDialog::new();
+    dialog.set_title("Terminal picture");
+    dialog.set_filters(Some(&filters));
+    dialog.set_initial_folder(Some(&gio::File::for_path(&*ctx.folder.borrow())));
+    ctx.picking.set(true);
+    ctx.window.set_visible(false);
+    let ctx = ctx.clone();
+    glib::spawn_future_local(async move {
+        if let Some(path) = dialog
+            .open_future(None::<&gtk::Window>)
+            .await
+            .ok()
+            .and_then(|f| f.path())
+        {
+            dispatch(&ctx, Op::Logo(Logo::Picture(path)));
+        }
+        ctx.window.present();
+        ctx.picking.set(false);
+    });
 }
 
 /// Picks the folder the grid shows. The picker is a normal window, which this layer-shell panel
