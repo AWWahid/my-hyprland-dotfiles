@@ -8,7 +8,7 @@
     font-family: Inter;
     /* SF-like: round quotes/commas (ss03); fixed-width digits so the clock and percentages don't shift (tnum) */
     font-feature-settings: "ss03=1, tnum=1";
-    font-size: 18px;
+    font-size: 15px;
     border: none;
     border-radius: 0;
     min-height: 0;
@@ -28,7 +28,7 @@ window#waybar {
 #workspaces button.active {
     color: @bg;
     background: @accent;
-    border-radius: 8px;
+    border-radius: 7px;
 }
 
 #workspaces button.urgent {
@@ -36,7 +36,7 @@ window#waybar {
 }
 
 /* all icons: one font size so Material Symbols' shared 24px grid keeps them optically equal.
-   27px glyph + 6px padding each side = 39px hit target; padding is the gap, so there is no dead zone.
+   22px glyph + 6px padding each side = 34px hit target; padding is the gap, so there is no dead zone.
    The dock's font (apps.css) is built from Material Symbols on the same grid; it is imported
    first, so the dock stays out of this rule's font-family */
 #custom-power,
@@ -63,7 +63,7 @@ window#waybar {
 #custom-stats,
 #custom-recording,
 #custom-notifications {
-    font-size: 27px;
+    font-size: 22px;
     color: @icon;
 }
 
@@ -91,12 +91,12 @@ window#waybar {
 #waybar #custom-power:hover {
     color: @bg;
     background: @accent;
-    border-radius: 8px;
+    border-radius: 7px;
 }
 /* a new clickable module goes in the hover list above */
 
 #workspaces button {
-    min-width: 39px;
+    min-width: 32px;
     padding: 0;
 }
 
@@ -147,7 +147,7 @@ window#waybar {
 
 /* notification slot (drawn smaller: the bell is taller than the other glyphs): bell, bell with dot when the centre has entries, accent moon for Do Not Disturb */
 #custom-notifications {
-    font-size: 25px;
+    font-size: 20px;
     margin-right: 6px;
 }
 
@@ -177,18 +177,18 @@ window#waybar {
 /* optical corrections: Material glyphs share a grid but not visual weight */
 /* wifi wedge is wide, solid and top-heavy: drawn smaller */
 #network {
-    font-size: 24px;
+    font-size: 20px;
 }
 
 /* chevron is a thin stroke, drawn larger to match the solid icons; its glyph sits high, so it's lowered
    (negative margin cancels the padding so the bar height doesn't change) */
 #custom-expand {
-    font-size: 30px;
+    font-size: 25px;
     padding-top: 1px;
     margin-bottom: -1px;
 }
 
-/* app launchers are the main targets: bigger glyphs and wider hit areas (33px + 9px each side = 51px) */
+/* app launchers are the main targets: bigger glyphs and wider hit areas (27px + 7px each side = 41px) */
 #custom-launcher,
 #custom-files,
 #custom-terminal,
@@ -198,8 +198,8 @@ window#waybar {
 #custom-notepad,
 #custom-obsidian,
 #custom-activity {
-    font-size: 33px;
-    padding: 0 9px;
+    font-size: 27px;
+    padding: 0 7px;
 }
 
 /* breathing room between power and the workspace numbers */
