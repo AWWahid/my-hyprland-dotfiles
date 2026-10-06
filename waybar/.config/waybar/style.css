@@ -2,7 +2,6 @@
 @import "accent.css";
 @import "icons.css";
 @import "bar.css";
-@import "apps.css";
 
 * {
     font-family: Inter;
@@ -37,15 +36,26 @@ window#waybar {
 
 /* all icons: one font size so Material Symbols' shared 24px grid keeps them optically equal.
    22px glyph + 6px padding each side = 34px hit target; padding is the gap, so there is no dead zone.
-   The dock's font (apps.css) is built from Material Symbols on the same grid; it is imported
-   first, so the dock stays out of this rule's font-family */
+   The Obsidian gem is the one glyph Material lacks: "Dotfiles Icons" (build-icons-font), same grid */
 #custom-power,
 #custom-expand,
+#custom-launcher,
+#custom-files,
+#custom-terminal,
+#custom-firefox,
+#custom-downloads,
+#custom-zed,
+#custom-notepad,
+#custom-activity,
 #network,
 #custom-stats,
 #custom-recording,
 #custom-notifications {
     font-family: "Material Symbols Filled";
+}
+
+#custom-obsidian {
+    font-family: "Dotfiles Icons";
 }
 
 #custom-power,
@@ -67,7 +77,7 @@ window#waybar {
     color: @icon;
 }
 
-/* icon colour (icons.css) and dock icon set (apps.css) are themes/ variants picked in the personalize panel */
+/* icon colour (icons.css) is a themes/ variant picked in the personalize panel */
 
 /* Hover: solid accent highlight (like fuzzel menus and the quick-settings tiles), icon in the bar colour, like the active workspace */
 /* #waybar prefix: two ids outrank the per-module colours (battery, power, .off) that come later in style.css */

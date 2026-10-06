@@ -110,7 +110,6 @@ struct State {
     accent_light: String,
     icons_accent: bool,
     bar_solid: bool,
-    apps_filled: bool,
     wide_gaps: bool,
     wallpaper: Option<PathBuf>,
     logo: Logo,
@@ -143,7 +142,6 @@ impl State {
             accent_light: get("light").unwrap_or("#0077b3".into()),
             icons_accent: links_to("waybar/icons.css", "accent"),
             bar_solid: links_to("waybar/bar.css", "solid"),
-            apps_filled: links_to("waybar/apps.css", "filled"),
             wide_gaps: fs::read_to_string(gaps_file()).is_ok_and(|g| g.trim() == "wide"),
             // Falls back to `current` for a wallpaper set before `source` existed
             wallpaper: fs::canonicalize(source_link()).ok().or_else(|| {
@@ -212,7 +210,6 @@ enum Op {
     FromWallpaper(Option<PathBuf>),
     Manual(String),
     Icons(bool),
-    Apps(bool),
     Bar(bool),
     Gaps(bool),
     Logo(Logo),
@@ -404,14 +401,6 @@ fn run(op: Op, mut s: State) {
                 "themes/icons-accent.css"
             } else {
                 "themes/icons-mono.css"
-            },
-        ),
-        Op::Apps(filled) => waybar_link(
-            "apps.css",
-            if filled {
-                "themes/apps-filled.css"
-            } else {
-                "themes/apps-outline.css"
             },
         ),
         Op::Bar(solid) => waybar_link(
@@ -846,15 +835,6 @@ fn appearance(ctx: &Rc<Ctx>, s: &State, pane: &gtk::Box) {
                 &[("Accent", true), ("Mono", false)],
                 s.icons_accent,
                 Op::Icons,
-            ),
-        ),
-        (
-            "App icons",
-            segmented(
-                ctx,
-                &[("Outline", false), ("Filled", true)],
-                s.apps_filled,
-                Op::Apps,
             ),
         ),
         (
