@@ -22,9 +22,9 @@
   },
   "base_keymap": "VSCode",
   "ui_font_family": "Inter",
-  "ui_font_size": 19,
+  "ui_font_size": 15,
   "buffer_font_family": "Geist Mono",
-  "buffer_font_size": 20,
+  "buffer_font_size": 16,
   "buffer_line_height": "standard",
   // No moving files by dragging in the file tree: a slip moved a whole folder once. Cut/copy/paste still work
   "project_panel": { "dock": "left", "drag_and_drop": false },

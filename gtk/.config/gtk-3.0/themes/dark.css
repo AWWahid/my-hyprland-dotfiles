@@ -2,12 +2,13 @@
 @define-color theme_bg_color #000000;
 @define-color theme_base_color #000000;
 /* Only the window is tinted: nested translucent layers would stack back to nearly opaque */
-window.background, menu, .csd.popup decoration, tooltip {
+window.background, dialog.background, menu, .csd.popup decoration, tooltip {
     background-color: @translucent_bg_color;
     background-image: none;
 }
 headerbar, .titlebar, textview, textview text, treeview.view,
-notebook, notebook > header, notebook > stack, scrolledwindow, list, row, iconview, .sidebar, placessidebar {
+notebook, notebook > header, notebook > stack, scrolledwindow, list, row, iconview, .sidebar, placessidebar,
+filechooser, filechooser .dialog-action-box, paned, stack, actionbar, actionbar > revealer > box, treeview.view header button, .dialog-action-area {
     background-color: transparent;
     background-image: none;
 }

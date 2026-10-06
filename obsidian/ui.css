@@ -8,14 +8,14 @@
    theme's colour shows through around the edges. */
 body { background-color: var(--background-primary) !important; }
 
-/* Mouse targets. The file tree ships ~29px rows and a collapse arrow whose clickable
-   area is only the ~10px glyph; both are small enough to misclick at 1080p.
+/* Mouse targets. The file tree's collapse arrow is only clickable on its ~10px glyph,
+   small enough to misclick at 1080p; rows get a 28px floor so the theme can't shrink them.
    min-height is what actually sets the row height: padding alone gets partly absorbed
    by the theme's own line-height. Obsidian already lays these rows out with flex, so
    only the height is touched - setting display here shifts the arrow onto the label. */
 .nav-file-title,
 .nav-folder-title {
-    min-height: 34px;
+    min-height: 28px;
     align-items: center;
 }
 
@@ -25,7 +25,7 @@ body { background-color: var(--background-primary) !important; }
 .tree-item-icon.collapse-icon::after {
     content: "";
     position: absolute;
-    inset: -9px -7px;
+    inset: -6px -7px;
 }
 
 /* The rest of the mouse targets. Icon buttons (ribbon, sidebar and view headers) ship at

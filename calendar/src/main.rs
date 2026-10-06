@@ -41,7 +41,7 @@ window { background: transparent; }
 .nav button:hover { background: alpha(currentColor, 0.1); }
 .nav .dot { font-size: 0.6em; }
 .weekday { font-size: 0.8em; font-weight: 600; color: alpha(currentColor, 0.5); }
-.day { min-width: 38px; min-height: 38px; border-radius: 999px; }
+.day { min-width: 34px; min-height: 34px; border-radius: 999px; }
 .day.other { color: alpha(currentColor, 0.3); }
 .day.today { background: @accent_bg_color; color: @accent_fg_color; font-weight: 700; }
 "#;

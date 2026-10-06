@@ -22,8 +22,8 @@ use std::{
     process::exit,
 };
 
-/// Only 28 (hyprctl setcursor) and 32 (`XCURSOR_SIZE`, gsettings cursor-size) are ever requested;
-/// 24 and 48 are headroom, and libXcursor falls back to the nearest size for anything else.
+/// Only 24 (`XCURSOR_SIZE`, gsettings cursor-size, hyprctl setcursor) is ever requested;
+/// 28, 32 and 48 are headroom, and libXcursor falls back to the nearest size for anything else.
 /// Cost is quadratic in size, so a short list is most of this program's speed.
 const SIZES: [u32; 4] = [24, 28, 32, 48];
 const FRAMES: u32 = 30;

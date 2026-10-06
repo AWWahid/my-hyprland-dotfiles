@@ -1,18 +1,18 @@
-font=Inter 13.5
+font=Inter 11.5
 include=~/.config/mako/colors
 
 # macOS-style banners: top-right stack, rounded, app icon on the left, bold title over body.
 anchor=top-right
 outer-margin=6
 margin=10
-width=470
+width=400
 height=200
-padding=17
+padding=14
 border-size=1
-border-radius=30
+border-radius=24
 icon-location=left
-max-icon-size=40
-icon-border-radius=9
+max-icon-size=32
+icon-border-radius=7
 format=<b>%s</b>\n%b
 default-timeout=5000
 max-visible=5

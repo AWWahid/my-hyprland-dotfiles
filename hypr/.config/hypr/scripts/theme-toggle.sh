@@ -130,6 +130,15 @@ button.suggested-action { background-color: #$accent; color: $on_accent; }
 selection, *:selected { background-color: alpha(#$accent, 0.3); }
 *:focus-visible { outline-color: alpha(#$accent, 0.5); }
 EOF
+# GTK3's Adwaita bakes in its blue too (file pickers, Mousepad, meld); same rules minus GTK4-only selectors,
+# with background-image and border cleared since GTK3 draws those buttons with gradients
+cat >> $cfg/gtk-3.0/gtk.css <<EOF
+scale trough highlight, progressbar progress, levelbar block.filled { background-color: #$accent; background-image: none; border-color: #$accent; }
+notebook > header tab:checked { box-shadow: inset 0 -3px #$accent; }
+switch:checked, check:checked, radio:checked { background-color: #$accent; background-image: none; border-color: #$accent; color: $on_accent; }
+button.suggested-action { background-color: #$accent; background-image: none; border-color: #$accent; color: $on_accent; }
+selection, *:selected { background-color: alpha(#$accent, 0.3); }
+EOF
 
 # Obsidian (not stowed; the snippet lives in the vault, which is its own git repo).
 # Electron follows the portal for light/dark, so this carries both modes' colours
@@ -256,8 +265,8 @@ elif [ "$(sed -n 's/^accent=#\?//p' "$index" 2>/dev/null)" != "$accent" ] || [ "
 fi
 ln -sfn $theme $icons/macOS-accent   # stable name for XCURSOR_THEME at login
 gsettings set $iface cursor-theme $theme
-hyprctl setcursor macOS ${XCURSOR_SIZE:-32} >/dev/null   # Hyprland skips reloading an already-loaded theme name
-hyprctl setcursor $theme ${XCURSOR_SIZE:-32} >/dev/null
+hyprctl setcursor macOS ${XCURSOR_SIZE:-24} >/dev/null   # Hyprland skips reloading an already-loaded theme name
+hyprctl setcursor $theme ${XCURSOR_SIZE:-24} >/dev/null
 
 pkill -USR2 -x waybar   # reload style
 pkill -USR1 -x kitty    # reload config
