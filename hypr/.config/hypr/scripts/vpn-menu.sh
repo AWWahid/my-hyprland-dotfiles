@@ -21,9 +21,9 @@ active() { nmcli -t -f NAME,TYPE connection show --active | awk -F: '$2 == "wire
 label() {
     case "$1" in
         warp)      echo "Cloudflare WARP" ;;
-        proton-sg) echo "Proton · Singapore" ;;
         proton-jp) echo "Proton · Japan" ;;
         proton-nl) echo "Proton · Netherlands" ;;
+        proton-ch) echo "Proton · Switzerland" ;;
         proton-us) echo "Proton · United States" ;;
         *)         echo "$1" ;;
     esac
