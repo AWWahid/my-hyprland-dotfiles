@@ -1,7 +1,7 @@
 --- @since 26.8.15
 -- File-explorer behaviour on top of yazi: the Quick Access start folder (built by
 -- quick-access.sh), a Trash-aware Delete, the right-click menu and a Finder-style status bar.
--- Entry: `plugin explorer -- open|openwith|delete|up|menu [empty]|home|copy|cut|paste|copypath|terminal`; also previews the Trash entry.
+-- Entry: `plugin explorer -- open|openwith|delete|up|menu [item|empty x y]|home|copy|cut|paste|copypath|terminal`; also previews the Trash entry.
 
 local M = {}
 
@@ -248,13 +248,144 @@ function M.terminal(w)
 		:stdout(Command.NULL):stderr(Command.NULL):status()
 end
 
--- Items marked file act on the hovered or selected items and are left out on empty space
-function M.menu(w)
+-- The right-click menu as a GUI draws it: a box at the pointer (flipped at the edges), the row under
+-- the pointer highlighted, a click runs it, a click elsewhere or Esc closes it. A silent ya.which
+-- underneath takes the keys (letters, arrows, Enter), and a click ends that wait with which:dismiss.
+local Menu = { _id = "explorer-menu" }
+local hover = { url = nil, file = nil, lead = nil, moved = 0, running = false }
+
+function Menu:new(area)
+	self._screen = area
+	return self
+end
+
+function Menu:reflow() return self.rows and { self } or {} end
+
+function Menu:redraw()
+	-- Pointer motion (mode 1003) for hover, which yazi never asks for: it sets 1002 at start and again
+	-- when it comes back from a program run in the terminal, then redraws, so this re-asserts it.
+	-- Here because Modal children are redrawn every frame, menu or not.
+	-- Never reset it with 1003l: 1000/1002/1003 are one setting in the terminal, so that would turn
+	-- the mouse off entirely, not back to 1002
+	io.stdout:write("\27[?1003h")
+	io.stdout:flush()
+	local rows, s = self.rows, self._screen
+	if not rows then
+		return {}
+	end
+	local w, h = 0, #rows + 2
+	for _, r in ipairs(rows) do
+		w = math.max(w, ui.width(r.desc or "") + #(r.on or "") + 6)
+	end
+	-- Corner at the pointer, flipped to the other side when it would run off the window
+	local x = self.x or (s.w - w) // 2
+	local y = self.y or (s.h - h) // 2
+	if x + w > s.w then
+		x = math.max(0, x - w + 1)
+	end
+	if y + h > s.h then
+		y = math.max(0, y - h + 1)
+	end
+	self._area = ui.Rect { x = x, y = y, w = math.min(w, s.w), h = math.min(h, s.h) }
+
+	local lines, seps = {}, {}
+	for i, r in ipairs(rows) do
+		if r.sep then
+			-- Drawn over the border so it joins it: ├────┤
+			lines[i] = ui.Line("")
+			seps[#seps + 1] = ui.Line("├" .. string.rep("─", w - 2) .. "┤")
+				:area(ui.Rect { x = x, y = y + i, w = w, h = 1 })
+				:style(th.which.border)
+		else
+			local line = ui.Line {
+				ui.Span(" " .. r.desc),
+				ui.Span(string.rep(" ", w - 4 - ui.width(r.desc) - #r.on)),
+				ui.Span(r.on .. " "):style(th.which.cand),
+			}
+			lines[i] = i == self.hover and line:style(th.help.hovered) or line
+		end
+	end
+	return ya.list_merge({
+		ui.Clear(self._area),
+		ui.Border(ui.Edge.ALL):area(self._area):type(ui.Border.ROUNDED):style(th.which.border),
+		ui.List(lines):area(self._area:pad(ui.Pad(1, 1, 1, 1))),
+	}, seps)
+end
+
+-- The row under the pointer, or nil on the border, a separator or outside
+function Menu:row_at(event)
+	local a = self._area
+	if not a or event.x <= a.x or event.x >= a.x + a.w - 1 then
+		return nil
+	end
+	local i = event.y - a.y
+	return self.rows[i] and not self.rows[i].sep and i or nil
+end
+
+-- picked: the item's number, or nil to just close
+function Menu:close(picked)
+	self.picked, self.rows, self.hover = picked, nil, nil
+	ui.render()
+end
+
+-- Clicks and motion go to the menu while it's open; yazi's own Root.click skips everything but the
+-- main layer, and ya.which's layer is active underneath
+function Menu:click(event, up)
+	if up then
+		return -- includes the release of the right-click that opened the menu
+	end
+	local i = event.is_left and self:row_at(event)
+	self:close(i and self.rows[i].n)
+	ya.emit("which:dismiss", {})
+end
+
+function Menu:move(event)
+	local i = self:row_at(event)
+	if i ~= self.hover then
+		self.hover = i
+		ui.render()
+	end
+end
+
+local menu_open = ya.sync(function(_, rows, x, y)
+	Menu.rows, Menu.x, Menu.y, Menu.hover, Menu.picked = rows, x, y, nil, nil
+	ui.render()
+end)
+
+-- One answer from ya.which: an item number (its letter), "up", "down", "enter", or nil (Esc,
+-- another key, or a click, which already closed the menu). Returns done and the item to run
+local menu_key = ya.sync(function(_, key)
+	local rows = Menu.rows
+	if not rows then
+		return true, Menu.picked
+	elseif key == "up" or key == "down" then
+		-- No row yet: ↓ starts at the first item, ↑ at the last
+		local step, i = key == "up" and -1 or 1, Menu.hover or (key == "up" and #rows + 1 or 0)
+		repeat
+			i = (i + step - 1) % #rows + 1
+		until not rows[i].sep
+		Menu.hover = i
+		ui.render()
+		return false
+	elseif key == "enter" then
+		if not Menu.hover then
+			return false
+		end
+		key = rows[Menu.hover].n
+	end
+	Menu:close(key)
+	return true, key
+end)
+
+-- Items marked file act on the hovered or selected items and are left out on empty space;
+-- {} is a separator
+function M.menu(w, x, y)
 	local items
 	if w.qa then
 		items = {
 			{ on = "o", desc = "Open", file = true, run = function() M.open(w) end },
 			{ on = "y", desc = "Copy path", file = true, run = function() M.copypath(w) end },
+			{},
 			{ on = "u", desc = "Unpin a folder…", run = function() ya.emit("plugin", { "yamb", "delete_by_key" }) end },
 		}
 	elseif w.trash then
@@ -265,8 +396,10 @@ function M.menu(w)
 				end
 			end },
 			{ on = "d", desc = "Delete permanently", file = true, run = function() M.delete(w) end },
+			{},
 			{ on = "s", desc = "Select / Unselect", file = true, run = function() ya.emit("toggle", {}) end },
 			{ on = "a", desc = "Select all", run = function() ya.emit("toggle_all", { state = "on" }) end },
+			{},
 			-- Empties everything; the list is only there because the message can't be empty
 			{ on = "e", desc = "Empty Trash", run = function()
 				if #w.urls > 0 then
@@ -275,45 +408,66 @@ function M.menu(w)
 			end },
 		}
 	else
+		local archive = w.hovered and not w.hovered.dir and M.archive(w.hovered.url)
+		local dir = w.hovered and w.hovered.dir
 		items = {
 			{ on = "o", desc = "Open", file = true, run = function() M.open(w) end },
 			{ on = "w", desc = "Open with…", file = true, run = function() M.openwith(w) end },
-			{ on = "r", desc = "Rename", file = true, run = function() ya.emit("rename", { cursor = "before_ext" }) end },
+			archive and { on = "e", desc = "Extract here", run = function() ya.emit("open", {}) end } or false,
+			archive and { on = "t", desc = "Extract to…", run = function() M.extract_to(w) end } or false,
+			{},
 			{ on = "c", desc = "Copy", file = true, run = function() M.copy(w) end },
 			{ on = "x", desc = "Cut", file = true, run = function() M.cut(w) end },
 			{ on = "v", desc = "Paste", run = function() M.paste(w) end },
+			{},
+			{ on = "r", desc = "Rename", file = true, run = function() ya.emit("rename", { cursor = "before_ext" }) end },
+			{ on = "d", desc = "Move to Trash", file = true, run = function() M.delete(w) end },
+			{},
 			{ on = "y", desc = w.empty and "Copy folder path" or "Copy path", run = function() M.copypath(w) end },
 			{ on = "T", desc = "Open terminal here", run = function() M.terminal(w) end },
 			{ on = "n", desc = "New folder", run = function() ya.emit("create", { dir = true }) end },
-			{ on = "d", desc = "Move to Trash", file = true, run = function() M.delete(w) end },
-			{ on = "i", desc = "Properties", file = true, run = function() ya.emit("spot", {}) end },
+			dir and { on = "p", desc = "Pin to Quick Access", run = function() ya.emit("plugin", { "yamb", "save" }) end } or false,
+			{},
 			{ on = "s", desc = "Select / Unselect", file = true, run = function() ya.emit("toggle", {}) end },
 			{ on = "a", desc = "Select all", run = function() ya.emit("toggle_all", { state = "on" }) end },
 			{ on = "f", desc = "Search…", run = function() ya.emit("search", { via = "fd" }) end },
 			{ on = "l", desc = "Filter this folder…", run = function() ya.emit("filter", { smart = true }) end },
+			{},
+			{ on = "i", desc = "Properties", file = true, run = function() ya.emit("spot", {}) end },
 		}
-		if w.hovered and not w.hovered.dir and M.archive(w.hovered.url) then
-			table.insert(items, 3, { on = "e", desc = "Extract here", run = function() ya.emit("open", {}) end })
-			table.insert(items, 4, { on = "t", desc = "Extract to…", run = function() M.extract_to(w) end })
-		end
-		if w.hovered and w.hovered.dir then
-			table.insert(items, #items - 5, { on = "p", desc = "Pin to Quick Access", run = function() ya.emit("plugin", { "yamb", "save" }) end })
-		end
 	end
 
 	-- yazi's help lists every key (ours carry a description), searchable by typing
+	items[#items + 1] = {}
 	items[#items + 1] = { on = "?", desc = "Keyboard shortcuts…", run = function() ya.emit("help", {}) end }
 
-	local shown, cands = {}, {}
+	-- No separator first, last or twice in a row once items are left out
+	local shown, rows, cands = {}, {}, {}
 	for _, item in ipairs(items) do
-		if not (w.empty and item.file) then
+		if item and not item.on then
+			if #rows > 0 and not rows[#rows].sep then
+				rows[#rows + 1] = { sep = true }
+			end
+		elseif item and not (w.empty and item.file) then
 			shown[#shown + 1] = item
 			cands[#cands + 1] = { on = item.on, desc = item.desc }
+			rows[#rows + 1] = { on = item.on, desc = item.desc, n = #shown }
 		end
 	end
-	local idx = ya.which { cands = cands }
-	if idx then
-		shown[idx].run()
+	if rows[#rows].sep then
+		rows[#rows] = nil
+	end
+	local n = #cands
+	cands[n + 1], cands[n + 2], cands[n + 3] = { on = "<Up>" }, { on = "<Down>" }, { on = "<Enter>" }
+
+	menu_open(rows, x, y)
+	local done, picked
+	repeat
+		local i = ya.which { cands = cands, silent = true }
+		done, picked = menu_key(i and (i <= n and i or ({ "up", "down", "enter" })[i - n]))
+	until done
+	if picked then
+		shown[picked].run()
 	end
 end
 
@@ -436,6 +590,81 @@ function M:setup()
 	Status:children_add(counts, 1000, Status.LEFT)
 	Status:children_add(space, 1000, Status.RIGHT)
 
+	Modal:children_add(Menu, 10)
+	local root_click = Root.click
+	function Root:click(event, up)
+		if Menu.rows then
+			return Menu:click(event, up)
+		end
+		return root_click(self, event, up)
+	end
+	function Root:move(event)
+		if Menu.rows then
+			return Menu:move(event)
+		end
+		-- The file under the pointer in the middle pane. Through Root's already-built children, not
+		-- ya.child_at(self:reflow()) like yazi's clicks: motion comes dozens of times a second
+		local file
+		for _, tab in ipairs(self._children) do
+			for _, c in ipairs(tab._id == "tab" and tab._children or {}) do
+				local a = c._area
+				if c._id == "current" and event.x >= a.x and event.x < a.x + a.w and event.y >= a.y then
+					file = c._folder.window[event.y - a.y + 1]
+				end
+			end
+		end
+		local url = file and tostring(file.url)
+		-- Only a change of row counts, so a pointer left still (or one the keyboard moved away from)
+		-- never pulls the cursor back
+		if not url or url == hover.url then
+			return
+		end
+		hover.url, hover.file, hover.lead, hover.moved = url, file.url, url, ya.time()
+		if hover.running then
+			return
+		end
+		-- The pointer moves the cursor, but in two steps, since a cursor move also loads the preview:
+		-- the highlight follows at once (at most 20 redraws a second), and the cursor itself, with
+		-- its preview, follows once the pointer rests on a file for 80 ms
+		hover.running = true
+		ui.render()
+		ya.async(function()
+			local drawn = hover.lead
+			repeat
+				ya.sleep(0.05)
+				if hover.lead ~= drawn then
+					drawn = hover.lead
+					ui.render()
+				end
+			until not hover.lead or ya.time() - hover.moved >= 0.08
+			if hover.lead then
+				ya.emit("reveal", { hover.file })
+			end
+			hover.running = false
+		end)
+	end
+
+	-- While the cursor hasn't caught up, the row under the pointer looks like the cursor and the
+	-- cursor's own row looks plain, so only one row is ever highlighted
+	local entity_style = Entity.style
+	function Entity:style()
+		local f = self._file
+		if hover.lead and f.in_current then
+			if tostring(f.url) == hover.lead then
+				return (f:style() or ui.Style()):patch(th.indicator.current)
+			elseif f.is_hovered then
+				return f:style() or ui.Style()
+			end
+		end
+		return entity_style(self)
+	end
+
+	-- The cursor moved: it caught up with the pointer, or the keyboard (or a click) moved it, which
+	-- wins over a pointer still waiting to catch up
+	ps.sub("hover", function()
+		hover.lead = nil
+	end)
+
 	-- yazi also sends cd at startup, so this builds Quick Access on launch and again on each visit,
 	-- picking up new mounts, pins and frequent folders
 	ps.sub("cd", function()
@@ -490,7 +719,7 @@ function M:seek() end
 function M:entry(job)
 	local action, w = job.args[1], where(job.args[2] == "empty")
 	if M[action] and action ~= "setup" and action ~= "entry" and action ~= "peek" and action ~= "seek" then
-		M[action](w)
+		M[action](w, tonumber(job.args[3]), tonumber(job.args[4]))
 	end
 end
 

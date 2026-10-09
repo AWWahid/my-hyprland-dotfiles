@@ -2,7 +2,8 @@
 [mgr]
 show_symlink = false
 # No "drag": pressing on one item and releasing on another selects a range (init.lua), not drag-and-drop
-mouse_events = ["click", "scroll"]
+# "move": the pointer moves the cursor, and hover in the right-click menu (explorer.yazi asks the terminal for motion)
+mouse_events = ["click", "scroll", "move"]
 
 # Quick Access's Trash entry previews the Trash, not the empty placeholder it points at
 [plugin]
