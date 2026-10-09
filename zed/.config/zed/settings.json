@@ -22,12 +22,13 @@
   "buffer_font_size": 20,
   "buffer_line_height": "standard",
   // No moving files by dragging in the file tree: a slip moved a whole folder once. Cut/copy/paste still work
-  "project_panel": { "dock": "left", "drag_and_drop": false },
+  "project_panel": { "dock": "left", "drag_and_drop": false, "scrollbar": { "show": "always" } },
   "theme": {
     "mode": "system",
     "light": "GitHub Pure Light",
     "dark": "GitHub Pure Dark",
   },
   // themes/github-pure.json: github.com's syntax and UI colors (Primer) on pure black / pure white,
-  // which Hyprland's window opacity and blur show through
+  // which Hyprland's window opacity and blur show through.
+  // Its scrollbar thumbs are opaque: Zed fades an idle thumb further, so a translucent one is invisible
 }
