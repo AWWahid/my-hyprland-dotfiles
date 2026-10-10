@@ -23,7 +23,7 @@ function Entity:click(event, up)
 
 	if event.is_right then
 		last.url = nil
-		ya.emit("plugin", { "explorer", "menu" })
+		ya.emit("plugin", { "explorer", string.format("menu item %d %d", event.x, event.y) })
 	elseif last.url == url and ya.time() - last.at < 0.4 then
 		last.url = nil
 		ya.emit("plugin", { "explorer", "open" })
@@ -40,7 +40,7 @@ function Current:click(event, up)
 	local all = self._folder.files
 	local file = self._folder.window[event.y - self._area.y + 1]
 	if not up and event.is_right and not file then
-		return ya.emit("plugin", { "explorer", "menu empty" })
+		return ya.emit("plugin", { "explorer", string.format("menu empty %d %d", event.x, event.y) })
 	elseif not up then
 		local start = file or all[#all]
 		press = event.is_left and start and tostring(start.url) or nil
@@ -51,18 +51,21 @@ function Current:click(event, up)
 	if not (event.is_left and from and to) or from == to then
 		return
 	end
-	ya.emit("escape", { select = true })
-	local inside = false
-	for _, f in ipairs(all) do
+	-- Both ends must be in this listing: a double-click opens a folder on the second press, and its
+	-- release then lands in the new folder, where the pressed item doesn't exist
+	local i, j
+	for n, f in ipairs(all) do
 		local u = tostring(f.url)
-		local edge = u == from or u == to
-		if edge then
-			inside = not inside
-		end
-		if edge or inside then
-			ya.emit("reveal", { f.url }) -- toggle only acts on the hovered item
-			ya.emit("toggle", { state = "on" })
-		end
+		i = u == from and n or i
+		j = u == to and n or j
+	end
+	if not (i and j) then
+		return
+	end
+	ya.emit("escape", { select = true })
+	for n = math.min(i, j), math.max(i, j) do
+		ya.emit("reveal", { all[n].url }) -- toggle only acts on the hovered item
+		ya.emit("toggle", { state = "on" })
 	end
 	ya.emit("reveal", { file.url })
 end

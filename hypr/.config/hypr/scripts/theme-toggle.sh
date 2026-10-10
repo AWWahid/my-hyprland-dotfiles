@@ -66,14 +66,40 @@ else
     folder='#a86f00' image='#a4329f' media='#6b4fc8' archive='#c62828' exec='#2e7d32'
 fi
 {
-    echo "[mgr]";       echo "cwd = { fg = \"#$accent\" }"
-    echo "[tabs]";      echo "active = { fg = \"$on_accent\", bg = \"#$accent\", bold = true }"; echo "inactive = { fg = \"#$accent\" }"
-    echo "[mode]";      echo "normal_main = { fg = \"$on_accent\", bg = \"#$accent\", bold = true }"; echo "normal_alt = { fg = \"#$accent\" }"
-    echo "[indicator]"; echo "current = { fg = \"$on_accent\", bg = \"#$accent\" }"; echo "parent = { fg = \"$on_accent\", bg = \"#$accent\" }"
-    for section in which confirm spot pick input cmp tasks help; do
-        echo "[$section]"; echo "border = { fg = \"#$accent\" }"
-    done
+    # which.cand: key labels in yazi's key popups (default lightcyan); help.hovered: the highlighted row
+    # in the right-click menu (explorer.yazi) and the help list
+    yfg="{ fg = \"#$accent\" }" yon="{ fg = \"$on_accent\", bg = \"#$accent\" }"
     cat <<EOF
+[mgr]
+cwd = $yfg
+border_style = $yfg
+[tabs]
+active = { fg = "$on_accent", bg = "#$accent", bold = true }
+inactive = $yfg
+[mode]
+normal_main = { fg = "$on_accent", bg = "#$accent", bold = true }
+normal_alt = $yfg
+[indicator]
+current = $yon
+parent = $yon
+[which]
+cand = $yfg
+border = $yfg
+[confirm]
+border = $yfg
+[spot]
+border = $yfg
+[pick]
+border = $yfg
+[input]
+border = $yfg
+[cmp]
+border = $yfg
+[tasks]
+border = $yfg
+[help]
+border = $yfg
+hovered = $yon
 [filetype]
 rules = [
     { url = "*", is = "orphan", bg = "red" },
