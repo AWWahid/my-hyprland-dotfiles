@@ -1,13 +1,13 @@
-/* Normal app windows are tinted 0.85 like the rest of the system (text stays solid); surfaces inside them
-   are transparent, since nested 0.85 layers stack back to nearly opaque. Popovers and tooltips are their own
+/* Normal app windows are translucent like the rest of the system (text stays solid); surfaces inside them
+   are transparent, since nested translucent layers stack back to nearly opaque. Popovers and tooltips are their own
    surfaces. Scoped to window:not(.layer-panel) so the layer-shell panels (calendar, personalize) keep their own CSS;
-   window_bg_color stays solid because the calendar derives its 0.85 from it. */
+   window_bg_color stays solid; translucent_bg_color (gtk.css, from personalize's opacity) is the tint. */
 @define-color window_bg_color #000000;
-@define-color dialog_bg_color rgba(0, 0, 0, 0.85);
-@define-color popover_bg_color rgba(0, 0, 0, 0.85);
+@define-color dialog_bg_color @translucent_bg_color;
+@define-color popover_bg_color @translucent_bg_color;
 @define-color card_bg_color rgba(255, 255, 255, 0.05);
 
-window.background:not(.layer-panel), popover > contents, tooltip { background-color: rgba(0, 0, 0, 0.85); }
+window.background:not(.layer-panel), popover > contents, tooltip { background-color: @translucent_bg_color; }
 window:not(.layer-panel) headerbar, window:not(.layer-panel) .titlebar, window:not(.layer-panel) .view, window:not(.layer-panel) textview, window:not(.layer-panel) textview > text,
 window:not(.layer-panel) list, window:not(.layer-panel) row, window:not(.layer-panel) scrolledwindow, window:not(.layer-panel) .sidebar, window:not(.layer-panel) .navigation-sidebar,
 window:not(.layer-panel) notebook > header, window:not(.layer-panel) notebook > stack, window:not(.layer-panel) viewport, window:not(.layer-panel) toolbarview,

@@ -134,6 +134,19 @@ local function savedGaps()
     return gaps == "wide" and 4 or 1
 end
 
+-- Blur from personalize's sliders (SUPER+W), which also writes the size/passes it maps blur strength to.
+-- Defaults are the ones in personalize/src/main.rs (blur 140 = size 10, passes 3; both vibrancies 0.5; noise 0.05)
+local function savedLook()
+    local look = { blur = 140, size = 10, passes = 3, vibrancy = 0.5, vibrancy_dark = 0.5, noise = 0.05 }
+    local f = io.open(os.getenv("HOME") .. "/.local/state/personalize/look")
+    if f then
+        for k, v in f:read("a"):gmatch("([%w_]+)=([%d.]+)") do look[k] = tonumber(v) end
+        f:close()
+    end
+    return look
+end
+local look = savedLook()
+
 -- Refer to https://wiki.hypr.land/Configuring/Basics/Variables/
 hl.config({
     general = {
@@ -162,7 +175,7 @@ hl.config({
         rounding       = 0,
         rounding_power = 2,
 
-        -- No active/inactive_opacity: it fades text too. Apps draw 0.85 backgrounds themselves
+        -- No active/inactive_opacity: it fades text too. Apps draw translucent backgrounds themselves (personalize's opacity, applied by theme-toggle.sh)
         -- (kitty, zed, waybar, fuzzel, mako, calendar) so text stays solid
 
         -- Darken unfocused windows (focus indicator, since borders are off)
@@ -180,10 +193,12 @@ hl.config({
         -- frame. Tiled windows never overlap, so there is nothing behind them to show anyway;
         -- the floating rule below turns it off for the windows that can overlap.
         blur = {
-            enabled           = true,
-            size              = 10,
-            passes            = 3,
-            vibrancy          = 0.1696,
+            enabled           = look.blur > 0,
+            size              = look.size,
+            passes            = look.passes,
+            noise             = look.noise,
+            vibrancy          = look.vibrancy,
+            vibrancy_darkness = look.vibrancy_dark,
             xray              = true,
             new_optimizations = true,
             popups            = false,

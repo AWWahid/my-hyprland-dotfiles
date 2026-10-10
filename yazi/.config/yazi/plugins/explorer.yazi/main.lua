@@ -300,7 +300,8 @@ function Menu:redraw()
 			local line = ui.Line {
 				ui.Span(" " .. r.desc),
 				ui.Span(string.rep(" ", w - 4 - ui.width(r.desc) - #r.on)),
-				ui.Span(r.on .. " "):style(th.which.cand),
+				-- Plain like the name, so the hover highlight colors it too (which.cand would override it)
+				ui.Span(r.on .. " "),
 			}
 			lines[i] = i == self.hover and line:style(th.help.hovered) or line
 		end

@@ -60,6 +60,16 @@ fn greeting_file() -> PathBuf {
 fn gaps_file() -> PathBuf {
     home().join(".local/state/hypr-gaps")
 }
+/// Blur, vibrancy and window opacity from the sliders: read by hyprland.lua (blur) and theme-toggle.sh (opacity)
+fn look_file() -> PathBuf {
+    home().join(".local/state/personalize/look")
+}
+// Slider defaults; hyprland.lua and theme-toggle.sh fall back to the same values when the file is missing
+const BLUR: f64 = 140.0;
+const VIBRANCY: f64 = 0.5;
+const VIBRANCY_DARK: f64 = 0.5;
+const NOISE: f64 = 0.05;
+const OPACITY: f64 = 0.70;
 /// Holds the folder the panel opens in, set with Make default
 fn folder_file() -> PathBuf {
     home().join(".local/state/personalize/wallpaper-folder")
@@ -117,6 +127,13 @@ struct State {
     apps_filled: bool,
     wide_gaps: bool,
     greeting: bool,
+    /// Blur reach in px (0 = off); vibrancy and how far it reaches into dark areas, 0-1; window background opacity 0-1
+    blur: f64,
+    vibrancy: f64,
+    vibrancy_dark: f64,
+    /// Blur grain, 0-1
+    noise: f64,
+    opacity: f64,
     wallpaper: Option<PathBuf>,
     logo: Logo,
 }
@@ -140,7 +157,18 @@ impl State {
         let links_to = |file: &str, variant: &str| {
             fs::read_link(cfg(file)).is_ok_and(|t| t.to_string_lossy().contains(variant))
         };
+        let look = fs::read_to_string(look_file()).unwrap_or_default();
+        let look = |k: &str, default: f64| {
+            look.lines()
+                .find_map(|l| l.strip_prefix(k)?.strip_prefix('=')?.trim().parse().ok())
+                .unwrap_or(default)
+        };
         State {
+            blur: look("blur", BLUR),
+            vibrancy: look("vibrancy", VIBRANCY),
+            vibrancy_dark: look("vibrancy_dark", VIBRANCY_DARK),
+            noise: look("noise", NOISE),
+            opacity: look("opacity", OPACITY),
             dark: gio::Settings::new("org.gnome.desktop.interface").string("color-scheme")
                 == "prefer-dark",
             from_wallpaper: get("source").as_deref() == Some("wallpaper"),
@@ -207,6 +235,53 @@ impl State {
     }
 }
 
+impl State {
+    /// size and passes are written too, so hyprland.lua needs no copy of the mapping
+    fn save_look(&self) {
+        let (size, passes) = blur_size_passes(self.blur);
+        write(
+            &look_file(),
+            &format!(
+                "blur={}\nsize={size}\npasses={passes}\nvibrancy={}\nvibrancy_dark={}\nnoise={}\nopacity={}\n",
+                self.blur, self.vibrancy, self.vibrancy_dark, self.noise, self.opacity
+            ),
+        );
+    }
+}
+
+/// Blur reach in px to Hyprland's (size, passes). Dual kawase reaches 2 * size * (2^passes - 1);
+/// passes step up with the reach so size stays small enough to avoid banding (DankMaterialShell's mapping)
+fn blur_size_passes(reach: f64) -> (i64, i64) {
+    let passes = match reach {
+        r if r <= 20.0 => 1,
+        r if r <= 60.0 => 2,
+        r if r <= 140.0 => 3,
+        _ => 4,
+    };
+    let size = (reach / (2.0 * ((1 << passes) - 1) as f64)).round() as i64;
+    (size.clamp(1, 20), passes)
+}
+
+/// Applies blur and vibrancy live, without the reload the saved values need.
+/// `hyprctl keyword` fails under the Lua config ("can't work with non-legacy parsers"), so this evals hl.config
+fn apply_blur(s: &State) {
+    let (size, passes) = blur_size_passes(s.blur);
+    let _ = Command::new("hyprctl")
+        .args([
+            "eval",
+            &format!(
+                "hl.config({{ decoration = {{ blur = {{ enabled = {}, size = {size}, passes = {passes}, \
+                 vibrancy = {}, vibrancy_darkness = {}, noise = {} }} }} }})",
+                s.blur > 0.0,
+                s.vibrancy,
+                s.vibrancy_dark,
+                s.noise
+            ),
+        ])
+        .stdout(std::process::Stdio::null())
+        .status();
+}
+
 /// (wallpaper, cached thumbnail)
 type Wall = (PathBuf, PathBuf);
 
@@ -223,6 +298,8 @@ enum Op {
     Gaps(bool),
     Logo(Logo),
     Greeting(bool),
+    /// Re-themes every app with the opacity already saved
+    Opacity,
 }
 
 /// Sets both accents from the image, each from its own matugen run with that mode's fallback
@@ -340,9 +417,12 @@ fn set_wallpaper(src: &Path) {
     // Links change only once the copy exists: being killed mid-scale leaves the old wallpaper intact
     relink(&source_link(), src);
     relink(&wallpaper_link(), &shown);
-    // Apply live; if hyprpaper isn't reachable, restart it (it reads the symlink on start)
+    // Apply live, naming each monitor (hyprpaper 0.8 ignores an empty monitor, yet reports ok);
+    // if hyprpaper isn't reachable, restart it (it reads the symlink on start)
     let _ = Command::new("sh").args(["-c",
-        r#"hyprctl hyprpaper wallpaper ",$1" >/dev/null 2>&1 || { pkill -x hyprpaper; setsid -f hyprpaper >/dev/null 2>&1; }"#,
+        r#"for m in $(hyprctl monitors | sed -n 's/^Monitor \([^ ]*\) .*/\1/p'); do
+            hyprctl hyprpaper wallpaper "$m,$1" >/dev/null 2>&1 || { pkill -x hyprpaper; setsid -f hyprpaper >/dev/null 2>&1; break; }
+        done"#,
         "sh"]).arg(&shown).status();
     // Only the shown copy is needed; hyprpaper already holds it, and a later pick rescales from the original
     for stale in fs::read_dir(scaled_dir())
@@ -451,6 +531,7 @@ fn run(op: Op, mut s: State) {
         }
         Op::Logo(logo) => set_logo(&logo),
         Op::Greeting(on) => write(&greeting_file(), if on { "on\n" } else { "off\n" }),
+        Op::Opacity => theme("apply"),
         Op::Refit(path) => set_wallpaper(&path),
         Op::Wallpaper(path, thumb) => {
             set_wallpaper(&path);
@@ -539,7 +620,7 @@ fn on_color(hex: &str) -> &'static str {
 fn css(s: &State, walls: &[Wall]) -> String {
     let (bg, fg, dim, border, card, ctrl, ctrl_on) = if s.dark {
         (
-            "alpha(@window_bg_color, 0.85)",
+            "@translucent_bg_color",
             "#ffffff",
             "alpha(#ffffff, 0.55)",
             "alpha(#ffffff, 0.14)",
@@ -549,7 +630,7 @@ fn css(s: &State, walls: &[Wall]) -> String {
         )
     } else {
         (
-            "alpha(@window_bg_color, 0.85)",
+            "@translucent_bg_color",
             "#000000",
             "alpha(#000000, 0.50)",
             "alpha(#000000, 0.10)",
@@ -643,6 +724,10 @@ button {{ border: none; box-shadow: none; outline: none; background: none; color
 .thumb.selected {{ box-shadow: 0 0 0 3px @p_accent; }}
 .folder-btn {{ background: @p_ctrl; border-radius: 7px; padding: 4px 12px; font-weight: normal; }}
 .folder-btn:hover {{ background: @p_ctrl_on; }}
+.reset {{ border-radius: 999px; padding: 4px; color: @p_dim; }}
+.reset:hover {{ background: @p_ctrl; color: @p_fg; }}
+scale trough {{ background: @p_ctrl; }}
+scale highlight {{ background: @p_accent; }}
 .use {{ background: @p_accent; color: @p_on_accent; border-radius: 999px; padding: 6px 16px; }}
 .use:hover {{ background: shade(@p_accent, 1.1); }}
 "#
@@ -688,13 +773,15 @@ fn dispatch(ctx: &Rc<Ctx>, op: Op) {
     if ctx.busy.replace(true) {
         return;
     }
+    // Rebuilding after a slider's apply would replace the slider under the pointer
+    let rebuild = !matches!(op, Op::Opacity);
     let (ctx, s) = (ctx.clone(), State::load());
     glib::spawn_future_local(async move {
         let _ = gio::spawn_blocking(move || run(op, s)).await;
         ctx.busy.set(false);
         if ctx.quit_pending.get() {
             ctx.main_loop.quit();
-        } else {
+        } else if rebuild {
             refresh(&ctx);
         }
     });
@@ -885,6 +972,164 @@ fn appearance(ctx: &Rc<Ctx>, s: &State, pane: &gtk::Box) {
         card.append(&row(title, &control));
     }
     pane.append(&card);
+
+    // Sliders show what users read: blur in px, vibrancy and transparency in percent
+    let card = gtk::Box::new(gtk::Orientation::Vertical, 0);
+    card.add_css_class("card");
+    card.append(&row(
+        "Blur",
+        &slider(ctx, 0.0, 280.0, BLUR, s.blur, "px", false, |s, v| {
+            s.blur = v;
+            apply_blur(s);
+        }),
+    ));
+    card.append(&gtk::Separator::new(gtk::Orientation::Horizontal));
+    card.append(&row(
+        "Vibrancy",
+        &slider(
+            ctx,
+            0.0,
+            100.0,
+            VIBRANCY * 100.0,
+            (s.vibrancy * 100.0).round(),
+            "%",
+            false,
+            |s, v| {
+                s.vibrancy = v / 100.0;
+                apply_blur(s);
+            },
+        ),
+    ));
+    card.append(&gtk::Separator::new(gtk::Orientation::Horizontal));
+    card.append(&row(
+        "Vibrancy in dark areas",
+        &slider(
+            ctx,
+            0.0,
+            100.0,
+            VIBRANCY_DARK * 100.0,
+            (s.vibrancy_dark * 100.0).round(),
+            "%",
+            false,
+            |s, v| {
+                s.vibrancy_dark = v / 100.0;
+                apply_blur(s);
+            },
+        ),
+    ));
+    card.append(&gtk::Separator::new(gtk::Orientation::Horizontal));
+    // Past ~20% the grain reads as static, though Hyprland allows up to 100%
+    card.append(&row(
+        "Noise",
+        &slider(
+            ctx,
+            0.0,
+            20.0,
+            NOISE * 100.0,
+            (s.noise * 100.0).round(),
+            "%",
+            false,
+            |s, v| {
+                s.noise = v / 100.0;
+                apply_blur(s);
+            },
+        ),
+    ));
+    card.append(&gtk::Separator::new(gtk::Orientation::Horizontal));
+    card.append(&row(
+        "Transparency",
+        &slider(
+            ctx,
+            0.0,
+            50.0,
+            (1.0 - OPACITY) * 100.0,
+            ((1.0 - s.opacity) * 100.0).round(),
+            "%",
+            true,
+            |s, v| {
+                s.opacity = (100.0 - v) / 100.0;
+            },
+        ),
+    ));
+    card.set_margin_top(12);
+    pane.append(&card);
+}
+
+/// Slider with a tick at the default and a reset button shown only off the default.
+/// `set` updates the state (and applies whatever is cheap live); the saved file and the app
+/// re-theme (`retheme`, for transparency) wait until the value has settled for a moment
+fn slider(
+    ctx: &Rc<Ctx>,
+    min: f64,
+    max: f64,
+    default: f64,
+    current: f64,
+    unit: &'static str,
+    retheme: bool,
+    set: fn(&mut State, f64),
+) -> gtk::Box {
+    let b = gtk::Box::new(gtk::Orientation::Horizontal, 6);
+    let scale = gtk::Scale::with_range(gtk::Orientation::Horizontal, min, max, 1.0);
+    scale.set_size_request(240, -1);
+    scale.set_value(current);
+    scale.set_draw_value(true);
+    scale.set_value_pos(gtk::PositionType::Right);
+    scale.set_format_value_func(move |_, v| format!("{v:.0} {unit}"));
+    scale.add_mark(default, gtk::PositionType::Bottom, None);
+    let reset = gtk::Button::from_icon_name("edit-undo-symbolic");
+    reset.set_tooltip_text(Some("Reset to default"));
+    reset.add_css_class("reset");
+    reset.set_opacity(if current == default { 0.0 } else { 1.0 });
+    reset.set_can_target(current != default);
+    reset.connect_clicked({
+        let scale = scale.clone();
+        move |_| scale.set_value(default)
+    });
+
+    let pending: Rc<Cell<Option<glib::SourceId>>> = Rc::default();
+    scale.connect_value_changed({
+        let (ctx, reset) = (ctx.clone(), reset.clone());
+        move |scale| {
+            let v = scale.value().round();
+            // Hidden by opacity, not visibility, so the slider keeps its width
+            reset.set_opacity(if v == default { 0.0 } else { 1.0 });
+            reset.set_can_target(v != default);
+            let mut s = State::load();
+            set(&mut s, v);
+            if let Some(id) = pending.take() {
+                id.remove()
+            }
+            let (ctx, pending2) = (ctx.clone(), pending.clone());
+            pending.set(Some(glib::timeout_add_local_once(
+                std::time::Duration::from_millis(400),
+                move || {
+                    pending2.set(None);
+                    // Reload: another slider may have saved since this one's drag began
+                    let mut s = State::load();
+                    set(&mut s, v);
+                    s.save_look();
+                    if retheme {
+                        apply_opacity(&ctx);
+                    }
+                },
+            )));
+        }
+    });
+    b.append(&scale);
+    b.append(&reset);
+    b
+}
+
+/// A theme apply already running would miss the new value, so wait for it to finish
+fn apply_opacity(ctx: &Rc<Ctx>) {
+    if ctx.busy.get() {
+        let ctx = ctx.clone();
+        glib::timeout_add_local_once(std::time::Duration::from_millis(300), move || {
+            apply_opacity(&ctx)
+        });
+    } else {
+        dispatch(ctx, Op::Opacity);
+    }
 }
 
 /// Light and Dark previews

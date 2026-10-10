@@ -20,7 +20,7 @@ use std::{
 const CSS: &str = r#"
 window { background: transparent; }
 .panel {
-    background: alpha(@window_bg_color, 0.85);
+    background: @translucent_bg_color;
     border: 1px solid alpha(currentColor, 0.2);
     border-radius: 30px;
     padding: 18px;
