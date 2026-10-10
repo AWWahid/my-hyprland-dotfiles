@@ -25,8 +25,10 @@ fi
 
 ln -sfn themes/$mode.css  $cfg/waybar/colors.css
 
-# Window background opacity: opacity.conf is the single source; apps get it as a fraction or a hex alpha byte
-opacity=$(sed -n 's/^opacity=//p' $cfg/hypr/opacity.conf)
+# Window background opacity from personalize's slider (default 0.70, as in personalize/src/main.rs);
+# apps get it as a fraction or a hex alpha byte
+opacity=$(sed -n 's/^opacity=//p' ~/.local/state/personalize/look 2>/dev/null)
+opacity=${opacity:-0.70}
 alpha=$(awk "BEGIN { printf \"%02x\", $opacity * 255 + 0.5 }")
 [ $mode = dark ] && { bg=000000; fg=e6e6e6; } || { bg=ffffff; fg=1a1a1a; }
 

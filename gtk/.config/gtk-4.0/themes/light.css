@@ -1,7 +1,7 @@
 /* Normal app windows are translucent like the rest of the system (text stays solid); surfaces inside them
    are transparent, since nested translucent layers stack back to nearly opaque. Popovers and tooltips are their own
    surfaces. Scoped to window:not(.layer-panel) so the layer-shell panels (calendar, personalize) keep their own CSS;
-   window_bg_color stays solid; translucent_bg_color (gtk.css, from hypr/opacity.conf) is the tint. */
+   window_bg_color stays solid; translucent_bg_color (gtk.css, from personalize's opacity) is the tint. */
 @define-color window_bg_color #ffffff;
 @define-color dialog_bg_color @translucent_bg_color;
 @define-color popover_bg_color @translucent_bg_color;

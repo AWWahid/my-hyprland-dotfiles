@@ -33,7 +33,8 @@
     "light": "GitHub Pure Light",
     "dark": "GitHub Pure Dark",
   },
-  // themes/github-pure.json: github.com's syntax and UI colors (Primer) on pure black / pure white,
+  // github-pure.json.in (theme-toggle.sh writes it to themes/github-pure.json with the window opacity):
+  // github.com's syntax and UI colors (Primer) on pure black / pure white,
   // which Hyprland's window opacity and blur show through.
   // Its scrollbar thumbs are opaque: Zed fades an idle thumb further, so a translucent one is invisible
 }

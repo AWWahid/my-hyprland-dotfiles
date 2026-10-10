@@ -1,2 +1,2 @@
-/* Bar matches windows: the window opacity from hypr/opacity.conf (theme-toggle.sh writes translucent_bg) */
+/* Bar matches windows: the window opacity from personalize (theme-toggle.sh writes translucent_bg) */
 @define-color bar_bg @translucent_bg;
