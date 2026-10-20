@@ -59,13 +59,16 @@ hyprctl reload >/dev/null
 rm -f $cfg/kitty/colors.conf
 { cat $cfg/kitty/themes/$mode.conf; echo "color16 #$accent"; echo "background_opacity $opacity"; } > $cfg/kitty/colors.conf
 
-# Yazi: accent on its interface (cwd, tabs, mode, borders); file names colored by kind of file:
-# folders amber, images magenta, audio/video purple, archives red, executables green, the rest plain text.
+# Yazi: accent on its interface (cwd, tabs, mode, borders); icons colored by kind of file, names plain text:
+# folders amber, images magenta, audio/video purple, archives red, executables green, PDFs pink,
+# documents blue, spreadsheets green, slides orange, code teal, the rest plain.
 # Read at startup, so an open yazi picks it up next launch
 if [ "$mode" = dark ]; then
     folder='#e0a53c' image='#d884e0' media='#a48cf2' archive='#ef6f6c' exec='#8fcf6a'
+    pdf='#f2709c' doc='#6fa8f2' sheet='#5fc28a' slides='#f0935a' code='#4fc4c4'
 else
     folder='#a86f00' image='#a4329f' media='#6b4fc8' archive='#c62828' exec='#2e7d32'
+    pdf='#c2185b' doc='#1e63c4' sheet='#1b7a43' slides='#c2571a' code='#00797a'
 fi
 {
     # which.cand: key labels in yazi's key popups (default lightcyan); help.hovered: the highlighted row
@@ -108,14 +111,10 @@ rules = [
     { url = "*", is = "dummy", bg = "red" },
     { url = "*/", is = "dummy", bg = "red" },
     { mime = "vfs/{absent,stale}", fg = "gray" },
-    { url = "*/", fg = "$folder" },
-    { mime = "**/image/*", fg = "$image" },
-    { mime = "**/{audio,video}/*", fg = "$media" },
-    { mime = "**/application/{zip,rar,7z*,tar,gzip,xz,zstd,bzip*,lzma,compress,archive,cpio,arj,xar,ms-cab*}", fg = "$archive" },
-    { url = "*", is = "exec", fg = "$exec" },
 ]
 EOF
-    cat $cfg/yazi/icons.toml
+    sed -e "s/\$folder/$folder/; s/\$image/$image/; s/\$media/$media/; s/\$archive/$archive/; s/\$exec/$exec/" \
+        -e "s/\$pdf/$pdf/; s/\$doc/$doc/; s/\$sheet/$sheet/; s/\$slides/$slides/; s/\$code/$code/" $cfg/yazi/icons.toml
 } > $cfg/yazi/theme.toml
 
 rm -f $cfg/fuzzel/colors.ini   # was a symlink into themes/; don't write through it
