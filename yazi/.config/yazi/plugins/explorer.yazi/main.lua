@@ -66,7 +66,12 @@ function M.open(w)
 	elseif h.dir then
 		return ya.emit("enter", {})
 	end
-	ya.emit("open", {})
+	for _, u in ipairs(w.urls) do
+		if not M.archive(u) then
+			return ya.emit("open", {})
+		end
+	end
+	M.extract_here(w) -- archives only: extract them next to themselves
 end
 
 function M.delete(w)
@@ -157,9 +162,8 @@ function M.openwith(w)
 end
 
 -- Archives: yazi's built-in extract plugin (7-Zip) does the work. It extracts into a hidden temporary
--- folder and renames it only on success, never overwrites (taken names get a suffix), doesn't nest a
+-- folder and then moves it into place, never overwrites (taken names get a suffix), doesn't nest a
 -- lone top-level item, asks for passwords and shows progress in the task list.
--- Opening an archive already extracts it next to itself (yazi's default open rule)
 local ARCHIVE = { ".zip", ".7z", ".rar", ".tar", ".tgz", ".tbz2", ".txz", ".tar.gz", ".tar.bz2", ".tar.xz",
 	".tar.zst", ".iso", ".cab", ".cpio", ".cbz", ".cbr" }
 
@@ -172,8 +176,51 @@ function M.archive(path)
 	end
 end
 
+-- Windows file systems refuse names with these characters or ending in a space or dot. 7-Zip then fails
+-- on those files, and the extract plugin still moves the rest into place, so they'd go missing unnoticed
+local WINDOWS_FS = { ntfs = true, ntfs3 = true, fuseblk = true, exfat = true, vfat = true }
+
+local function windows_unsafe(archive)
+	local lib = require("archive")
+	local items = lib.list_archive({ "-p", archive }, 0, math.huge)
+	if #items == 1 and (items[1].path.ext or ""):lower() == "tar" then
+		items = lib.list_compressed_tar({ "-p", archive }, 0, math.huge)
+	end
+	local bad, first = 0, nil
+	for _, item in ipairs(items) do
+		local p = tostring(item.path)
+		if p:find('[:*?"<>|\\]') or p:find("[ .]/") or p:find("[ .]$") then
+			bad, first = bad + 1, first or p
+		end
+	end
+	return bad, first
+end
+
+-- --noisy lets the extract plugin ask for a password instead of failing
+local function extract(urls, dest)
+	local out = Command("findmnt"):arg({ "-no", "FSTYPE", "-T", dest }):output()
+	local windows = out and WINDOWS_FS[out.stdout:gsub("%s+$", "")]
+	for _, u in ipairs(urls) do
+		local bad, first = 0, nil
+		if windows then
+			bad, first = windows_unsafe(u)
+		end
+		if bad > 0 then
+			notify(string.format("%s has %d name%s Windows drives can't store, like “%s”. Extract it to a folder on a Linux drive.",
+				u:match("[^/]+$"), bad, bad == 1 and "" or "s", first), "error")
+		else
+			ya.emit("plugin", { "extract", ya.quote(u) .. " " .. ya.quote(dest) .. " --noisy" })
+		end
+	end
+end
+
+function M.extract_here(w)
+	extract(w.urls, w.cwd)
+end
+
 function M.extract_to(w)
-	local dest, event = ya.input { title = "Extract to folder:", value = w.cwd, pos = { "top-center", y = 3, w = 60 } }
+	-- The trailing slash lets a typed folder name land inside the current folder
+	local dest, event = ya.input { title = "Extract to folder:", value = w.cwd:gsub("/*$", "/"), pos = { "top-center", y = 3, w = 60 } }
 	if event ~= 1 or dest == "" then
 		return
 	end
@@ -184,9 +231,7 @@ function M.extract_to(w)
 	elseif not Command("test"):arg({ "-w", dest }):status().success then
 		return notify("No permission to write to " .. dest) -- the extract plugin would fail without a word
 	end
-	for _, u in ipairs(w.urls) do
-		ya.emit("plugin", { "extract", ya.quote(u) .. " " .. ya.quote(dest) })
-	end
+	extract(w.urls, dest)
 end
 
 function M.home()
@@ -414,7 +459,7 @@ function M.menu(w, x, y)
 		items = {
 			{ on = "o", desc = "Open", file = true, run = function() M.open(w) end },
 			{ on = "w", desc = "Open with…", file = true, run = function() M.openwith(w) end },
-			archive and { on = "e", desc = "Extract here", run = function() ya.emit("open", {}) end } or false,
+			archive and { on = "e", desc = "Extract here", run = function() M.extract_here(w) end } or false,
 			archive and { on = "t", desc = "Extract to…", run = function() M.extract_to(w) end } or false,
 			{},
 			{ on = "c", desc = "Copy", file = true, run = function() M.copy(w) end },
