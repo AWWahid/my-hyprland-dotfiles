@@ -17,3 +17,10 @@ export EDITOR=edit VISUAL=edit SUDO_EDITOR=edit
 
 # user@host in the accent (kitty palette slot 16, set by theme-toggle.sh) so prompts stand out in long output
 [ "$TERM" = xterm-kitty ] && PS1='\[\e[1;38;5;16m\]\u@\h\[\e[0m\]:\w> '
+
+
+# >>> Codex installer >>>
+export PATH="/home/wasee/.local/bin:$PATH"
+# <<< Codex installer <<<
+
+. "$HOME/.local/share/../bin/env"

@@ -1,0 +1,13 @@
+[
+  {
+    "context": "Workspace",
+    "bindings": {
+      "f5": [
+        "task::Spawn",
+        {
+          "task_name": "Fortran: build and run"
+        }
+      ]
+    }
+  }
+]

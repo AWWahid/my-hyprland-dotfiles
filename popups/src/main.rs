@@ -8,6 +8,7 @@ use gtk::{gdk, gio, glib, prelude::*};
 use std::{
     cell::{Cell, RefCell},
     f64::consts::{FRAC_PI_2, TAU},
+    ffi::{CStr, c_char, c_void},
     fs,
     io::{Read, Write},
     path::{Path, PathBuf},
@@ -149,18 +150,106 @@ fn temp_path() -> Option<PathBuf> {
         })
 }
 
-// i915/xe actual GPU clock and its top clock
-fn gpu_paths() -> Option<(PathBuf, f64)> {
+// GPU clock source: i915/xe sysfs, or NVML for the proprietary NVIDIA driver (no sysfs clocks)
+enum Gpu {
+    // act_freq path, temperature path (hwmon, often absent on iGPUs)
+    Sysfs(PathBuf, Option<PathBuf>),
+    // clock, temperature, memory, device
+    Nvml(NvmlClock, NvmlClock, NvmlMem, *mut c_void),
+}
+
+const GIB: f64 = 1_073_741_824.0;
+
+type NvmlClock = unsafe extern "C" fn(*mut c_void, u32, *mut u32) -> i32;
+// nvmlMemory_t: total, free, used bytes
+type NvmlMem = unsafe extern "C" fn(*mut c_void, *mut [u64; 3]) -> i32;
+
+unsafe extern "C" {
+    fn dlopen(file: *const c_char, mode: i32) -> *mut c_void;
+    fn dlsym(handle: *mut c_void, name: *const c_char) -> *mut c_void;
+}
+
+impl Gpu {
+    // Current clock in MHz
+    fn read(&self) -> f64 {
+        match self {
+            Gpu::Sysfs(p, _) => read_num(p).unwrap_or(0.0),
+            Gpu::Nvml(clock, _, _, dev) => {
+                let mut mhz = 0;
+                // 0 = NVML_CLOCK_GRAPHICS
+                unsafe { clock(*dev, 0, &mut mhz) };
+                f64::from(mhz)
+            }
+        }
+    }
+
+    // Temperature in °C
+    fn temp(&self) -> Option<f64> {
+        match self {
+            Gpu::Sysfs(_, t) => t.as_ref().and_then(read_num::<f64>).map(|t| t / 1000.0),
+            Gpu::Nvml(_, temp, _, dev) => {
+                let mut c = 0;
+                // 0 = NVML_TEMPERATURE_GPU
+                (unsafe { temp(*dev, 0, &mut c) } == 0).then(|| f64::from(c))
+            }
+        }
+    }
+
+    // Dedicated memory used and total in bytes; integrated GPUs share system memory
+    fn vram(&self) -> Option<(f64, f64)> {
+        match self {
+            Gpu::Sysfs(..) => None,
+            Gpu::Nvml(_, _, mem, dev) => {
+                let mut m = [0; 3];
+                (unsafe { mem(*dev, &mut m) } == 0).then(|| (m[2] as f64, m[0] as f64))
+            }
+        }
+    }
+}
+
+// The GPU and its top clock in MHz
+fn gpu() -> Option<(Gpu, f64)> {
     let card = fs::read_dir("/sys/class/drm")
         .into_iter()
         .flatten()
         .flatten()
         .map(|e| e.path())
-        .find(|p| p.join("gt_act_freq_mhz").exists())?;
-    Some((
-        card.join("gt_act_freq_mhz"),
-        read_num(card.join("gt_RP0_freq_mhz")).unwrap_or(1300.0),
-    ))
+        .find(|p| p.join("gt_act_freq_mhz").exists());
+    if let Some(card) = card {
+        let max = read_num(card.join("gt_RP0_freq_mhz")).unwrap_or(1300.0);
+        let temp = fs::read_dir(card.join("device/hwmon"))
+            .into_iter()
+            .flatten()
+            .flatten()
+            .map(|e| e.path().join("temp1_input"))
+            .find(|p| p.exists());
+        return Some((Gpu::Sysfs(card.join("gt_act_freq_mhz"), temp), max));
+    }
+    nvml()
+}
+
+// NVML ships with the NVIDIA driver; loaded at runtime so machines without it still run
+fn nvml() -> Option<(Gpu, f64)> {
+    unsafe {
+        let lib = dlopen(c"libnvidia-ml.so.1".as_ptr(), 2); // RTLD_NOW
+        if lib.is_null() {
+            return None;
+        }
+        let sym = |name: &CStr| Some(dlsym(lib, name.as_ptr())).filter(|f| !f.is_null());
+        let init: unsafe extern "C" fn() -> i32 = std::mem::transmute(sym(c"nvmlInit_v2")?);
+        let by_index: unsafe extern "C" fn(u32, *mut *mut c_void) -> i32 =
+            std::mem::transmute(sym(c"nvmlDeviceGetHandleByIndex_v2")?);
+        let clock: NvmlClock = std::mem::transmute(sym(c"nvmlDeviceGetClockInfo")?);
+        let max_clock: NvmlClock = std::mem::transmute(sym(c"nvmlDeviceGetMaxClockInfo")?);
+        let temp: NvmlClock = std::mem::transmute(sym(c"nvmlDeviceGetTemperature")?);
+        let mem: NvmlMem = std::mem::transmute(sym(c"nvmlDeviceGetMemoryInfo")?);
+        let mut dev = std::ptr::null_mut();
+        let mut max = 0;
+        if init() != 0 || by_index(0, &mut dev) != 0 || max_clock(dev, 0, &mut max) != 0 {
+            return None;
+        }
+        Some((Gpu::Nvml(clock, temp, mem, dev), f64::from(max)))
+    }
 }
 
 // Bytes received/sent on physical interfaces, so a VPN tunnel isn't counted twice. Listed on every
@@ -255,8 +344,8 @@ impl Ring {
         let frac = Rc::new(Cell::new(0.0_f64));
         let area = gtk::DrawingArea::new();
         area.add_css_class("ring");
-        area.set_content_width(68);
-        area.set_content_height(68);
+        area.set_content_width(60);
+        area.set_content_height(60);
         area.set_draw_func({
             let frac = frac.clone();
             move |a, cr, w, h| {
@@ -362,16 +451,24 @@ fn build_stats(panel: &gtk::Box) {
     let cpu_ring = Ring::new(&rings, "CPU");
     let mem_ring = Ring::new(&rings, "Memory");
     let temp_ring = Ring::new(&rings, "Temp");
+    let gpu = gpu();
+    let gpu_temp_ring = gpu
+        .as_ref()
+        .filter(|(g, _)| g.temp().is_some())
+        .map(|_| Ring::new(&rings, "Temp"));
     let disk_ring = Ring::new(&rings, "Disk");
     panel.append(&rings);
 
     let cpu_card = Card::new("\u{e322}", "CPU clock", true);
     panel.append(&cpu_card.root);
-    let gpu = gpu_paths();
-    let gpu_card = Card::new("\u{f7a3}", "GPU clock", true);
-    if let Some((_, gmax)) = &gpu {
+    let gpu_card = Card::new("\u{f7a3}", "GPU", true);
+    let vram_card = Card::new("\u{e30d}", "VRAM", true);
+    if let Some((g, gmax)) = &gpu {
         gpu_card.detail.set_text(&format!("max {gmax:.0} MHz"));
         panel.append(&gpu_card.root);
+        if g.vram().is_some() {
+            panel.append(&vram_card.root);
+        }
     }
     let disk_card = Card::new("\u{f80e}", "Disk", false);
     panel.append(&disk_card.root);
@@ -411,8 +508,8 @@ fn build_stats(panel: &gtk::Box) {
         let avg = freqs.iter().sum::<f64>() / (freqs.len().max(1) as f64);
         cpu_card.set(&format!("{:.2} GHz", avg / 1e6), avg / cpu_max.max(1.0));
 
-        if let Some((act, gmax)) = &gpu {
-            let f = read_num::<f64>(act).unwrap_or(0.0);
+        if let Some((g, gmax)) = &gpu {
+            let f = g.read();
             gpu_card.set(
                 &if f > 0.0 {
                     format!("{f:.0} MHz")
@@ -421,6 +518,14 @@ fn build_stats(panel: &gtk::Box) {
                 },
                 f / gmax,
             );
+            if let (Some(r), Some(c)) = (&gpu_temp_ring, g.temp()) {
+                r.set(c / 100.0, Some(&format!("{c:.0}°")), "GPU");
+            }
+            if let Some((used, total)) = g.vram() {
+                let frac = used / total.max(1.0);
+                vram_card.set(&format!("{:.1} / {:.0} GB", used / GIB, total / GIB), frac);
+                vram_card.detail.set_text(&format!("{:.0}%", frac * 100.0));
+            }
         }
         up.set_text(&uptime());
     };
